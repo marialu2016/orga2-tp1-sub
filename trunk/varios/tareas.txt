@@ -1,0 +1,23 @@
+Tareas:
+    
+    Varios:
+        Repositorio svn                                 LISTO! (julian)
+        Estructura de directorios                       LISTO! (julian)
+        Pseudocódigo
+        Versión en C del programa
+
+    Informe:
+        Carátula
+        Introducción
+        Desarrollo
+        Discusión
+        Conclusiones
+        Manual de usuario
+        Manual de corrector
+        Lista de archivos
+        Estadísticas
+    
+    Código:
+        Programa ASM (el tp)
+        
+        
