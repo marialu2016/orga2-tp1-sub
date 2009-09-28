@@ -7,7 +7,7 @@ void detectarBordeSobel(IplImage* src, IplImage* dst);
 char calcularPuntoSobel(IplImage* img, int r, int c, int type);
 
 void detectarBordeRoberts(IplImage* src, IplImage* dst);
-char calcularPuntoRoberts(IplImage* img, int r, int c, int type);
+char calcularPuntoRoberts(IplImage* img, int r, int c);
 
 int main( int argc, char** argv )
 {
@@ -27,23 +27,24 @@ int main( int argc, char** argv )
 	   return -1;
 
    //cvSaveImage("lenaBYN.BMP",src); //grabo la imagen byn
-   detectarBordeSobel(src,dst);
+   //detectarBordeSobel(src,dst);
+   detectarBordeRoberts(src,dst);
    cvSaveImage("prueba.bmp",dst);
    return 0;
 }
 
-void detectarBordeSobel(IplImage* src, IplImage* dst) {
+void detectarBordeRoberts(IplImage* src, IplImage* dst) {
 	char* srcData, *dstData;
 	srcData = src->imageData;
 	dstData = dst->imageData;
 	int r=0,c=0;
 	for(r=0;r<src->height;r++) {
 		for(c=0;c<src->widthStep;c++) {
-			if(c==0 || c+1 >= src->width) {
+			if(c+1 >= src->width) {
 				dstData[c+r*dst->widthStep] = 0x00; 
 			}else {
 				//dstData[c+r*src->widthStep] = calcularPuntoSobel(src, c, r*src->widthStep, 1);
-				dstData[c+r*src->widthStep] = calcularPuntoSobel(src, r, c, 1);
+				dstData[c+r*src->widthStep] = calcularPuntoRoberts(src, r, c);
 			}
 		}
 	}
@@ -51,25 +52,17 @@ void detectarBordeSobel(IplImage* src, IplImage* dst) {
 }
 
 
-char calcularPuntoSobel(IplImage* img, int r, int c, int type) {
+char calcularPuntoRoberts(IplImage* img, int r, int c) {
 	char* imgData;
 	imgData = img->imageData;
 	int widthStep = img->widthStep;
 	int valor=0;
 	char ret=0;
-	int coef[] = {1,2,1,1,2,1};
-	if(type==1) {
-		int a11 = c-1 + (r-1)*widthStep;
-		int a13 = a11+2;
-		int a21 = a11+widthStep;
-		int a23 = a21+2;
-		int a31 = a21+widthStep;
-		int a33 = a31+2;
-		valor = (coef[0]*imgData[a13]) + (coef[1]*imgData[a23]) + (coef[2]*imgData[a33]) - 
-			(coef[3]*imgData[a11]) - (coef[4]*imgData[a21]) - (coef[5]*imgData[a31]);
-	}
+	int a11 = c + r*widthStep;
+	int a22 = c+1 + (r+1)*widthStep;
+	valor = imgData[a11] - imgData[a22];
 	if(valor<0)
-		valor = -valor;
+		return 0;
 	if(valor>255)
 		return 255;
 	return valor;
