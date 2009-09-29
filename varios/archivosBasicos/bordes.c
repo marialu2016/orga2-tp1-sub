@@ -47,7 +47,7 @@ void detectarBordeSobel(IplImage* src, IplImage* dst) {
 			}
 		}
 	}
-	int i;
+// 	int i;
 }
 
 
@@ -57,19 +57,26 @@ char calcularPuntoSobel(IplImage* img, int r, int c, int type) {
 	int widthStep = img->widthStep;
 	int valor=0;
 	char ret=0;
-	int coef[] = {1,2,1,1,2,1};
+	int coef[3][3] = {{-2,-2,0},{-2,0,2},{0,2,2} } ;
 	if(type==1) {
 		int a11 = c-1 + (r-1)*widthStep;
+		int a12 = a11 + 1;
 		int a13 = a11+2;
 		int a21 = a11+widthStep;
+		int a22 = a21 + 1;
 		int a23 = a21+2;
 		int a31 = a21+widthStep;
+		int a32 = a31+1;
 		int a33 = a31+2;
-		valor = (coef[0]*imgData[a13]) + (coef[1]*imgData[a23]) + (coef[2]*imgData[a33]) - 
-			(coef[3]*imgData[a11]) - (coef[4]*imgData[a21]) - (coef[5]*imgData[a31]);
+		valor = (coef[0][0]*(unsigned char)imgData[a11]) + (coef[0][1]*(unsigned char)imgData[a12]) + (coef[0][2]*(unsigned char)imgData[a13]) +
+			(coef[1][0]*(unsigned char)imgData[a21]) + (coef[1][1]*(unsigned char)imgData[a22]) + (coef[1][2]*(unsigned char)imgData[a23]) +
+			(coef[2][0]*(unsigned char)imgData[a31]) + (coef[2][1]*(unsigned char)imgData[a32]) + (coef[2][2]*(unsigned char)imgData[a33]);
+
+;
 	}
+	valor+=127;
 	if(valor<0)
-		valor = -valor;
+		return 0;
 	if(valor>255)
 		return 255;
 	return valor;

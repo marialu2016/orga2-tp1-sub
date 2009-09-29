@@ -51,7 +51,9 @@ cicloF:
 		add eax, WIDTH	;eax=a21
 		inc eax		;eax=a22
 		sub esi, [eax]	;esi=a11-a22
+		jns ponerPositivo  ;hacer modulo... 
 
+	cont:
 		mov eax, ecx
 		mul DWORD WIDTH
 		add eax, DST
@@ -77,3 +79,7 @@ fin:
 	pop esi
 	pop ebp
 	ret ;vovlemos
+
+ponerPositivo:
+	neg esi
+	jmp cont
