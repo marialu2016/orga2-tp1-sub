@@ -7,4 +7,4 @@ bordes.o: bordes.c
 	gcc -g -c bordes.c -o bordes.o `pkg-config --cflags opencv`
 
 clean:
-	rm -f $(OBJECTS)
+	rm -f $(OBJECTS) bordes
