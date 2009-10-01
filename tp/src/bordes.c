@@ -4,7 +4,7 @@ char calcularPuntoSobel(const char* imgData, int widthStep, int r, int c, int ty
 /**
  * Implementación usando OpenCV del operador de Sobel en X, Y o ambos.
  */
-void cvSobel(const char* srcData, char* dstData, int ancho, int alto, int xorder, int yorder) {
+int cvSobel(const char* srcData, char* dstData, int ancho, int alto, int xorder, int yorder) {
     int widthStep = ancho % 4 > 0 ? ancho + 4 - ancho % 4 : ancho;
     
     int r = 0, c = 0;
