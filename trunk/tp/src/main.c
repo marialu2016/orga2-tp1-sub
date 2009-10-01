@@ -131,16 +131,16 @@ int main(int argc, char** argv) {
             // Sobel XY
             sufix = "_sobxy";
             
-        } else if(!strcmp(oper, "s1") || !strcmp(oper, "sobxcv")) {
+        } else if(!strcmp(oper, "s3") || !strcmp(oper, "sobxcv")) {
             // Sobel X (OPenCV)
             sufix = "_sobxcv";
             /**/asmSobel(src->imageData, dst->imageData, src->width, src->height);
             
-        } else if(!strcmp(oper, "s2") || !strcmp(oper, "sobycv")) {
+        } else if(!strcmp(oper, "s4") || !strcmp(oper, "sobycv")) {
             // Sobel Y (OPenCV)
             sufix = "_sobycv";
                         
-        } else if(!strcmp(oper, "s3") || !strcmp(oper, "sobxycv")) {
+        } else if(!strcmp(oper, "s5") || !strcmp(oper, "sobxycv")) {
             // Sobel XY (OPenCV)
             sufix = "_sobxycv";
             
