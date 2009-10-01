@@ -24,8 +24,9 @@ extern void asmSobel(const char* src, char* dst, int ancho, int alto, int xorder
 
 /**
  * Implementación usando OpenCV del operador de Sobel en X, Y o ambos.
+ * Devuelve la cantidad de clocks insumidos por el algoritmo.
  */
-void cvSobel(const char* src, char* dst, int ancho, int alto, int xorder, int yorder);
+int cvSobel(const char* src, char* dst, int ancho, int alto, int xorder, int yorder);
 
 
 void mostrarUso() {
@@ -105,6 +106,9 @@ int main(int argc, char** argv) {
     int op;
     for(op = 3; op < argc; op = op + 1) {
         char* oper = argv[op];
+        
+        int tscl;
+                     
         printf("---- Operador '%s'                                \n", oper);
 
         // Creo la imagen de OpenCV
@@ -113,8 +117,10 @@ int main(int argc, char** argv) {
         if(!strcmp(oper, "r1") || !strcmp(oper, "robxy")) {
             // Roberts XY
             sufix = "_robxy";
+            __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
             /**/asmRoberts(src->imageData, dst->imageData, src->width, src->height);
-            
+            __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
+        /*    
         } else if(!strcmp(oper, "r2") || !strcmp(oper, "prexy")) {
             // Prewitt XY
             sufix = "_prexy";
@@ -130,12 +136,13 @@ int main(int argc, char** argv) {
         } else if(!strcmp(oper, "r5") || !strcmp(oper, "sobxy")) {
             // Sobel XY
             sufix = "_sobxy";
+        */
             
         } else if(!strcmp(oper, "s3") || !strcmp(oper, "sobxcv")) {
             // Sobel X (OPenCV)
             sufix = "_sobxcv";
-            /**/asmSobel(src->imageData, dst->imageData, src->width, src->height);
-            
+            //tscl = cvSobel(src->imageData, dst->imageData, src->width, src->height, 1, 0);
+        /*                
         } else if(!strcmp(oper, "s4") || !strcmp(oper, "sobycv")) {
             // Sobel Y (OPenCV)
             sufix = "_sobycv";
@@ -147,11 +154,14 @@ int main(int argc, char** argv) {
         } else if(!strcmp(oper, "byn")) {
             // Escala de grises (sin efectos)
             sufix = "_byn";
-            
+        */    
         } else {
                 printf("  ERROR: No se reconoce el operador '%s'\n", oper);
                 continue;
         }
+        
+        // Cantidad de clocks insumidos por el algoritmo.
+        printf("El procesamiento tomó %d clocks", tscl); printf("\n");
         
         char* filename = malloc(strlen(prefix) + strlen(sufix) + strlen(extension) + 1);
         
