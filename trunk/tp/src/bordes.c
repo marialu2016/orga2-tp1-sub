@@ -2,11 +2,13 @@
 char calcularPuntoSobel(const char* imgData, int widthStep, int r, int c, int type);
 
 /**
- * Implementación usando OpenCV del operador de Sobel en X, Y o ambos.
+ * Implementación en C del operador de Sobel en X, Y o ambos.
+ * Devuelve la cantidad de clocks insumidos por el algoritmo.
  */
-int cvSobel(const char* srcData, char* dstData, int ancho, int alto, int xorder, int yorder) {
+int cSobel(const char* srcData, char* dstData, int ancho, int alto, int xorder, int yorder) {
     int widthStep = ancho % 4 > 0 ? ancho + 4 - ancho % 4 : ancho;
-    
+    int tscl;
+    __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC 
     int r = 0, c = 0;
     for(r = 0; r < alto; r++) {
         for(c = 0; c < widthStep; c++) {
@@ -17,6 +19,8 @@ int cvSobel(const char* srcData, char* dstData, int ancho, int alto, int xorder,
             }
         }
     }
+    __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
+    return tscl;
 }
 
 

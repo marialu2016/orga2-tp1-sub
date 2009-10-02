@@ -15,7 +15,7 @@ extern void asmRoberts(const char* src, char* dst, int ancho, int alto);
 /**
  * Implementación en assembly del operador de Prewitt en X, Y o ambos.
  */
-extern void asmPrewitt(const char* src, char* dst, int ancho, int alto, int xorder, int yorder);
+extern void asmPrewitt(const char* src, char* dst, int ancho, int alto);
 
 /**
  * Implementación en assembly del operador de Sobel en X, Y o ambos.
@@ -23,11 +23,10 @@ extern void asmPrewitt(const char* src, char* dst, int ancho, int alto, int xord
 extern void asmSobel(const char* src, char* dst, int ancho, int alto, int xorder, int yorder);
 
 /**
- * Implementación usando OpenCV del operador de Sobel en X, Y o ambos.
+ * Implementación en C del operador de Sobel en X, Y o ambos.
  * Devuelve la cantidad de clocks insumidos por el algoritmo.
  */
-int cvSobel(const char* src, char* dst, int ancho, int alto, int xorder, int yorder);
-
+int cSobel(const char* src, char* dst, int ancho, int alto, int xorder, int yorder);
 
 void mostrarUso() {
     printf("                                                                      "); printf("\n");
@@ -45,9 +44,13 @@ void mostrarUso() {
     printf("        -'r4' o 'soby':  operador de Sobel (Y)                        "); printf("\n");
     printf("        -'r5' o 'sobxy': operador de Sobel (XY)                       "); printf("\n");
     printf("                                                                      "); printf("\n");
-    printf("        -'s3' o 'sobxcv':  como 'r3' pero usando OpenCV               "); printf("\n");
-    printf("        -'s4' o 'sobycv':  como 'r4' pero usando OpenCV               "); printf("\n");
-    printf("        -'s5' o 'sobxycv': como 'r5' pero usando OpenCV               "); printf("\n");
+    printf("        -'cv3' o 'sobxcv':  como 'r3' pero usando OpenCV              "); printf("\n");
+    printf("        -'cv4' o 'sobycv':  como 'r4' pero usando OpenCV              "); printf("\n");
+    printf("        -'cv5' o 'sobxycv': como 'r5' pero usando OpenCV              "); printf("\n");
+    printf("                                                                      "); printf("\n");
+    printf("        -'c3' o 'sobxc':  como 'r3' pero implementado en C            "); printf("\n");
+    printf("        -'c4' o 'sobyc':  como 'r3' pero implementado en C            "); printf("\n");
+    printf("        -'c5' o 'sobxyc': como 'r3' pero implementado en C            "); printf("\n");
     printf("                                                                      "); printf("\n");
     printf("     El programa generará una imagen por cada operador solicitado. Si "); printf("\n");
     printf(" se especifica más de uno se agregará al nombre de destino un sufijo  "); printf("\n");
@@ -62,126 +65,123 @@ void mostrarUso() {
  * Ver contenido de la función mostrarUso() para más detalles.
  */
 int main(int argc, char** argv) {
-    /**/IplImage * src = 0;
-    /**/IplImage * dst = 0;
+    /**/IplImage * src;
+    /**/IplImage * dst;
+    /**/IplImage * tmp;
     
-    if(argc <= 3) {
+    //char* srcName, dstName, oper;
+    
+    const char* srcName;
+    const char* dstName;
+    const char* oper;
+    
+    int tscl;
+    
+    if(argc != 4) {
         mostrarUso();
         return 1;
     }
     
-    char* srcName = argv[1];
-    char* dstName = argv[2];
-    
-    char* prefix;
-    char* extension;
-    char* sufix;
+    srcName = argv[1];
+    dstName = argv[2];
+    oper    = argv[3];
     
     /**/src = cvLoadImage(srcName, CV_LOAD_IMAGE_GRAYSCALE);
     /**/if(!src) {
     /**/    printf("ERROR: no se pudo abrir la imagen fuente");
     /**/    return 1;
     /**/}
+    /**/if(src->origin != 0) {
+    /**/    printf("Formato no reconocido: el 'origin' de OpenCV dio distinto a cero");
+    /**/    return 1;
+    /**/}
     
-    int addSufix = argc > 4;
+    printf("---- Operador '%s'                                \n", oper);
+
+    // Creo la imagen de OpenCV
+    /**/dst = cvCreateImage(cvGetSize(src), IPL_DEPTH_8U, 1);
+                
+    if(!strcmp(oper, "r1") || !strcmp(oper, "robxy")) {
+        // Roberts XY
+        __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
+        /**/asmRoberts(src->imageData, dst->imageData, src->width, src->height);
+        __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
+        
+    } else if(!strcmp(oper, "r2") || !strcmp(oper, "prexy")) {
+        // Prewitt XY
+        __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
+        /**/asmPrewitt(src->imageData, dst->imageData, src->width, src->height);
+        __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
+        
+    } else if(!strcmp(oper, "r3") || !strcmp(oper, "sobx")) {
+        // Sobel X
+        __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
+        /**/asmSobel(src->imageData, dst->imageData, src->width, src->height, 1, 0);
+        __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
     
-    if(addSufix) {
-        char* dotIndex = strrchr(dstName, '.');
-        if(dotIndex) {
-            extension = dotIndex;
-            prefix = malloc(strlen(dstName) - strlen(extension) + 1);
-            strncat(prefix, dstName, strlen(dstName) - strlen(extension));
-        } else {
-            prefix = malloc(strlen(dstName) + 1);
-            prefix = strcpy(prefix, dstName);
-            extension = "";
-        }
+    } else if(!strcmp(oper, "r4") || !strcmp(oper, "soby")) {
+        // Sobel Y
+        __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
+        /**/asmSobel(src->imageData, dst->imageData, src->width, src->height, 0, 1);
+        __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
+    
+    } else if(!strcmp(oper, "r5") || !strcmp(oper, "sobxy")) {
+        // Sobel XY
+        __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
+        /**/asmSobel(src->imageData, dst->imageData, src->width, src->height, 1, 1);
+        __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
+    
+       
+    } else if(!strcmp(oper, "cv3") || !strcmp(oper, "sobxcv")) {
+        // Sobel X (OPenCV)
+        __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
+        /**/cvSobel(src, dst, 1, 0, 3);
+        __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
+    
+    } else if(!strcmp(oper, "cv4") || !strcmp(oper, "sobycv")) {
+        // Sobel Y (OPenCV)
+        __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
+        /**/cvSobel(src, dst, 0, 1, 3);
+        __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
+    
+    } else if(!strcmp(oper, "cv5") || !strcmp(oper, "sobxycv")) {
+        // Sobel XY (OPenCV)
+        __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
+        /**/cvSobel(src, dst, 1, 1, 3);
+        __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
+    
+    } else if(!strcmp(oper, "byn")) {
+        // Escala de grises (sin efectos)
+        tmp = src;
+        src = dst;
+        dst = tmp;
+      
+    } else if(!strcmp(oper, "c3") || !strcmp(oper, "sobxc")) {
+        // Sobel X (C)
+        /**/tscl = cSobel(src->imageData, dst->imageData, src->width, src->height, 1, 0);
+    
+    } else if(!strcmp(oper, "c4") || !strcmp(oper, "sobyc")) {
+        // Sobel Y (C)
+        /**/tscl = cSobel(src->imageData, dst->imageData, src->width, src->height, 0, 1);
+    
+    } else if(!strcmp(oper, "c5") || !strcmp(oper, "sobxyc")) {
+        // Sobel XY (C)
+        /**/tscl = cSobel(src->imageData, dst->imageData, src->width, src->height, 1, 1);
+    
     } else {
-        prefix = malloc(strlen(dstName) + 1);
-        prefix = strcpy(prefix, dstName);
-        sufix = "_";
-        extension = "";
+        printf("    ERROR: No se reconoce el operador '%s'\n", oper);
+        return 1;
     }
-    
-    int op;
-    for(op = 3; op < argc; op = op + 1) {
-        char* oper = argv[op];
         
-        int tscl;
-                     
-        printf("---- Operador '%s'                                \n", oper);
+    // Cantidad de clocks insumidos por el algoritmo.
+    printf("    El procesamiento tomó %d clocks", tscl); printf("\n");
+        
+    printf("    Guardando en '%s'...\n", dstName);
 
-        // Creo la imagen de OpenCV
-        /**/dst = cvCreateImage(cvGetSize(src), IPL_DEPTH_8U, 1);
-        
-        if(!strcmp(oper, "r1") || !strcmp(oper, "robxy")) {
-            // Roberts XY
-            sufix = "_robxy";
-            __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
-            /**/asmRoberts(src->imageData, dst->imageData, src->width, src->height);
-            __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
-        /*    
-        } else if(!strcmp(oper, "r2") || !strcmp(oper, "prexy")) {
-            // Prewitt XY
-            sufix = "_prexy";
-            
-        } else if(!strcmp(oper, "r3") || !strcmp(oper, "sobx")) {
-            // Sobel X
-            sufix = "_sobx";
-            
-        } else if(!strcmp(oper, "r4") || !strcmp(oper, "soby")) {
-            // Sobel Y
-            sufix = "_soby";
-            
-        } else if(!strcmp(oper, "r5") || !strcmp(oper, "sobxy")) {
-            // Sobel XY
-            sufix = "_sobxy";
-        */
-            
-        } else if(!strcmp(oper, "s3") || !strcmp(oper, "sobxcv")) {
-            // Sobel X (OPenCV)
-            sufix = "_sobxcv";
-            //tscl = cvSobel(src->imageData, dst->imageData, src->width, src->height, 1, 0);
-        /*                
-        } else if(!strcmp(oper, "s4") || !strcmp(oper, "sobycv")) {
-            // Sobel Y (OPenCV)
-            sufix = "_sobycv";
-                        
-        } else if(!strcmp(oper, "s5") || !strcmp(oper, "sobxycv")) {
-            // Sobel XY (OPenCV)
-            sufix = "_sobxycv";
-            
-        } else if(!strcmp(oper, "byn")) {
-            // Escala de grises (sin efectos)
-            sufix = "_byn";
-        */    
-        } else {
-                printf("  ERROR: No se reconoce el operador '%s'\n", oper);
-                continue;
-        }
-        
-        // Cantidad de clocks insumidos por el algoritmo.
-        printf("El procesamiento tomó %d clocks", tscl); printf("\n");
-        
-        char* filename = malloc(strlen(prefix) + strlen(sufix) + strlen(extension) + 1);
-        
-        filename = strcat(filename, prefix);
-        if(addSufix) filename = strcat(filename, sufix);
-        filename = strcat(filename, extension);
-        
-        printf("    Guardando en '%s'... ", filename);
+    // Guardar resultado
+    /**/cvSaveImage(dstName, dst);
 
-        // Guardar resultado
-        /**/cvSaveImage(filename, dst);
-
-        printf("OK\n");
-
-        free(filename);
-    }
-    
-    free(prefix);
-    
+    printf("    OK\n");
+  
     return 0;
 }
-
- 

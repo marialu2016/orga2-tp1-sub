@@ -2,20 +2,24 @@ NASMFLAGS=-f elf
 
 .PHONY: all clean
 
-all: clean bordes
+all: clean main
 
-main: main.o asmBordes.o
-	gcc  main.o -g -o main asmBordes.o `pkg-config --cflags --libs opencv` 
+main: main.o bordes.o asmRoberts.o asmPrewitt.o asmSobel.o
+	gcc main.o -ggdb -o main asmRoberts.o asmPrewitt.o asmSobel.o `pkg-config --cflags --libs opencv` 
 
-bordes: bordes.o asmBordes.o
-	gcc  bordes.o -g -o bordes asmBordes.o `pkg-config --cflags --libs opencv`
+main.o: main.c
+	gcc -ggdb -c main.c -o main.o `pkg-config --cflags --libs opencv`
 
-bordes.o: bordes.c asmBordes.o
-	gcc -g -c bordes.c -o bordes.o `pkg-config --cflags opencv`
-	
-asmBordes.o: asmBordes.asm
-	nasm -f elf -g -o asmBordes.o asmBordes.asm
+bordes.o: bordes.c
+	gcc -ggdb -c bordes.c -o bordes.o
+
+asmRoberts.o: asmRoberts.asm
+	nasm -f elf -g -o asmRoberts.o asmRoberts.asm
+asmPrewitt.o: asmPrewitt.asm
+	nasm -f elf -g -o asmPrewitt.o asmPrewitt.asm
+asmSobel.o: asmSobel.asm
+	nasm -f elf -g -o asmSobel.o asmSobel.asm
 
 clean:
-	rm -f bordes
+	rm -f main
 	rm -f *.o

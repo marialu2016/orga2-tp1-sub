@@ -9,7 +9,7 @@ int main( int argc, char** argv )
 
    IplImage * src = 0;
    IplImage * dst = 0;
-   IplImage * dst_ini = 0;
+   //IplImage * dst_ini = 0;
 
    char* filename = argc == 2 ? argv[1] : (char*)"lena.bmp";
 
@@ -22,8 +22,8 @@ int main( int argc, char** argv )
 	   return -1;
 
    // Creo una IplImage para cada salida esperada
-   if( (dst_ini = cvCreateImage (cvGetSize (src), IPL_DEPTH_8U, 1) ) == 0 )
-	   return -1;
+   //if( (dst_ini = cvCreateImage (cvGetSize (src), IPL_DEPTH_8U, 1) ) == 0 )
+   //   return -1;
 
    // Aplico el filtro (Sobel con derivada x en este caso) y salvo imagen 
    cvSobel(src, dst, 1,0,3); 	// Esta parte es la que tienen que programar los alumnos en ASM	y comparar
