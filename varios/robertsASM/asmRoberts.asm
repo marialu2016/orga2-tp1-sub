@@ -40,26 +40,45 @@ cicloF:
 		;NO PODEMOS ACCEDER DIRECTO A Aij, necesitamos hacer DST+EBX+ECX*WIDTH
 		;la multiplicacion se guarda implicitamente en eax, trabajamos segun eso
 		;supongo q la multiplicacion entra en eax????? preguntar IMPORTANTE IMPORTANTE
+		xor esi, esi
+		mov esi, ecx	;esi=fila
+		
+		mov eax, esi
+		mul DWORD WIDTH	;esi=fila*widht
+		mov esi, eax
 
-		mov eax, ecx	;eax=fila
-		mul DWORD WIDTH	;eax=fila*widht
-		add eax, SRC	;eax = DST + WIDTH*FILA = POS FILA BIEN
-		add eax, ebx	;eax=a11
-		xor esi, esi	;esi va a ser el valor a poner
-		mov esi, [eax]	;esi = (m11*a11)
+		add esi, SRC	;esi = DST + WIDTH*FILA = POS FILA BIEN
+		add esi, ebx	;esi=&a11
+		xor eax, eax	;eax va a ser el valor a poner
+		mov al, [esi]	;eax = (m11*a11) , m11=1!
 
-		add eax, WIDTH	;eax=a21
-		inc eax		;eax=a22
-		sub esi, [eax]	;esi=a11-a22
-		jns ponerPositivo  ;hacer modulo... 
+		add esi, WIDTH	;esi=&a21
+		inc esi		;esi=&a22
+		push ebx
+		xor ebx, ebx
+		mov bl, [esi]
+		sub eax, ebx	;eax=a11-a22
+		pop ebx
+		;creo q aca tenemos que saturar
+		jl pasarAPositivo 
+	sigue1:
+; 		cmp eax, 255
+; 		jg pasarA255
+; 	sigue2:
 
 	cont:
-		mov eax, ecx
-		mul DWORD WIDTH
-		add eax, DST
-		add eax, ebx
+		mov esi, ecx ;ecx=fila
 
-		mov [eax], esi
+		push eax
+		mov eax, esi
+		mul DWORD WIDTH ;esto esta mal
+		mov esi, eax
+		pop eax
+
+		add esi, DST 
+		add esi, ebx
+
+		mov [esi], al
 		
 		;vemos si se repite el clicl
 		inc ebx ;columna++
@@ -80,6 +99,10 @@ fin:
 	pop ebp
 	ret ;vovlemos
 
-ponerPositivo:
-	neg esi
-	jmp cont
+pasarAPositivo:
+	xor al, al
+	jmp sigue1
+
+; pasarA255:
+; 	mov eax, 255
+; 	jmp sigue2
