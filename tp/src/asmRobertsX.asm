@@ -19,15 +19,6 @@ global asmRoberts
 %define VAL [EBP-4]	;variable local donde se almacena el valor temporal
 %define WIDTHSTEP WIDTH
 
-%macro saturar 0
-	xor ebx, ebx
-	cmp eax, 0
-	cmovl eax, ebx
-	mov ebx, 255
-	cmp eax, 255
-	cmovg eax,ebx
-%endmacro
-
 section .text
 
 section .data
@@ -60,38 +51,15 @@ cicloF:
 	
 			xor ebx, ebx
 			mov bl, [esi+edx]	;bl = a22
-			sub eax, ebx		;eax=a11-a22i
-			saturar
+
+			sub eax, ebx		;eax=a11-a22
+			jl pasarA0
+		sigue1: cmp eax, 255
+			jg pasarA255
+		sigue2:
 			sub esi, WIDTHSTEP
 		;ahora hay q poner en SRC[a11] a al
 		mov [edi+edx-1], al
-
-		;en la pos posta del dts está el valor de la mascara en x
-		;ahora calcularemos esto en y, y haremos bla bla
-		;esi en la misma fila q entro
-		;edx quedo en una columna despues
-		mascaraY:
-			xor eax, eax	;eax=0
-			mov al, [esi+edx]	;eax = a12
-
-			add esi, WIDTHSTEP
-			dec edx
-
-			xor ebx, ebx
-			mov bl, [esi+edx]
-
-			sub eax, ebx	;eax = a21-a12
-			saturar
-			sub esi, WIDTHSTEP ;esi = fila en la que entro y edx en la col necesaria
-
-		;aca hacemos la suma entre ambas mascaras
-		xor ebx, ebx
-		mov bl, [edi+edx]
-		add eax, ebx	;eax=mascY + mascX
-		saturar	
-		mov [edi+edx], al
-
-		inc edx
 		cmp edx, WIDTH
 		jne cicloC
 	;aca sigue cilcoF
@@ -102,7 +70,7 @@ cicloF:
 	jne cicloF
 
 fin:
-	;hacemos los pop basicos
+		;hacemos los pop basicos
 	pop ebx
 	pop edi
 	pop esi
@@ -110,3 +78,9 @@ fin:
 	pop ebp
 	ret ;vovlemos
 
+pasarA0:
+	mov eax,0
+	jmp sigue1
+pasarA255:
+	mov eax, 255
+	jmp sigue2
