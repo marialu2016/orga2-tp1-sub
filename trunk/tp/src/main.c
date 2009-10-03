@@ -1,5 +1,5 @@
-/**/#include <cv.h>
-/**/#include <highgui.h>
+#include <cv.h>
+#include <highgui.h>
 
 #include "bordes.c"
 
@@ -11,6 +11,11 @@
  * Implementación en assembly del operador de Roberts en X y en Y.
  */
 extern void asmRoberts(const char* src, char* dst, int ancho, int alto);
+
+/**
+ * Implementación en assembly del operador de Roberts en X y en Y.
+ */
+extern void asmRobertsPush(const char* src, char* dst, int ancho, int alto);
 
 /**
  * Implementación en assembly del operador de Prewitt en X, Y o ambos.
@@ -190,7 +195,14 @@ int main(int argc, char** argv) {
             tscl = 0;
             usarSrc = 1;
             sufijo = "_byn";
-                    
+        
+        } else if(!strcmp(oper, "push")) {
+            // Roberts X usando push/pop
+            __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
+            /**/asmRobertsPush(src->imageData, dst->imageData, src->width, src->height);
+            __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
+            sufijo = "_robertsPUSH";            
+                   
         } else {
             printf("    ERROR: No se reconoce el operador '%s'\n", oper);
             continue;
