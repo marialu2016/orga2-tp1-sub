@@ -39,17 +39,19 @@ asmRoberts:  ;funcion a la que se llama
 	push edi
 	push ebx
 	
-	dec DWORD WIDTH	;hacemos que recorra hasta WIDHT-1
 	;rutina para calcualr WISTHSTEP
 	mov eax, WIDTH
 	test eax, 2
-	je comenzarRutina
+	je iniWithS
 	shr eax, 2
 	inc eax
 	shl eax, 2
 	mov DWORD WIDTHSTEP, eax
-
+	jmp comenzarRutina
+iniWithS:
+	mov WIDTHSTEP, eax
 comenzarRutina:
+	dec DWORD WIDTH	;hacemos que recorra hasta WIDHT-1
 	xor ecx, ecx	;fila actual
 	inc ecx		;para q salga una fila antes
 	mov esi, SRC	;pos fila actual src

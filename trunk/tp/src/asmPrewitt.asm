@@ -18,6 +18,18 @@ global asmPrewitt
 	cmovg eax,ebx
 %endmacro
 
+%macro restaLocal 0
+	xor ebx, ebx
+	mov bl, [esi+edx]
+	sub eax, ebx
+%endmacro
+
+%macro sumaLocal 0
+	xor ebx, ebx
+	mov bl, [esi+edx]
+	add eax, ebx
+%endmacro
+
 section .text
 
 section .data
@@ -30,17 +42,22 @@ asmPrewitt:  ;funcion a la que se llama
 	push edi
 	push ebx
 	
-	dec DWORD WIDTH	;hacemos que recorra hasta WIDHT-1
 	;rutina para calcualr WISTHSTEP
 	mov eax, WIDTH
 	test eax, 2
-	je comenzarRutina
+	je iniWithS
 	shr eax, 2
 	inc eax
 	shl eax, 2
 	mov DWORD WIDTHSTEP, eax
+	jmp comenzarRutina
+iniWithS:
+	mov WIDTHSTEP, eax
 
 comenzarRutina:
+	dec DWORD WIDTH	;hacemos que recorra hasta WIDHT-1
+	dec DWORD HEIGHT;hacemos que recorra hasta HEIGHT-1
+
 	xor ecx, ecx	;fila actual
 	inc ecx		;para q salga una fila antes
 	mov esi, SRC	;pos fila actual src
@@ -49,6 +66,7 @@ comenzarRutina:
 ;recordemos q esi+edx es la posicion a22 de la matriz actual (el centro)
 cicloF:
 	xor edx, edx 		;columna actual
+	inc edx			;para que empiece desde la segunda fila
 	push ecx		;ACA VAMOS A HACER UNA MARAVILLA, ECX NO ACCEDE A MEMORIA EEEE
 	mov ecx, WIDTHSTEP
 	cicloC:
@@ -57,104 +75,68 @@ cicloF:
 			;aca esi esta en la posicion 1 de la fila actual
 			;vamos a ir cambiando esi y edx pero al final va a estar en elmismo lugar (invariante (?))
 			sub esi, ecx
-
 			dec edx			;esi+edx=a11
-			xor ebx, ebx
-			mov bl, [esi+edx]
-			sub eax, ebx		;eax = -a11
+			restaLocal		;eax=-a11
+
+			add esi, ecx		;esi+edx=a21
+			restaLocal		;eax=-a11-a21
 
 			add esi, ecx		;esi+edx=a31
-			xor ebx, ebx
-			mov bl, [esi+edx]
-			sub eax, ebx		;eax = -a11-a21
-
-			add esi, ecx		;esi+edx=a31
-			xor ebx, ebx
-			mov bl, [esi+edx]
-			sub eax, ebx		;eax= -a11-a21-a31
+			restaLocal		;eax=-a11-a21-a31
 
 			add edx, 2		;esi+edx=a33
-			xor ebx, ebx
-			mov bl, [esi+edx]
-			add eax, ebx		;eax+= a33
+			sumaLocal		;eax=-a11-a21-a31+a33
 
 			sub esi, ecx		;esi+edx=a23
-			xor ebx, ebx
-			mov bl, [esi+edx]
-			add eax, ebx		;eax+= a23
+			sumaLocal		;eax=-a11-a21-a31+a33+a32
 
 			sub esi, ecx		;esi+edx=a13
-			xor ebx, ebx
-			mov bl, [esi+edx]
-			add eax, ebx		;eax+= a13
+			sumaLocal		;eax=-a11-a21-a31+a33+a32+a31
+
 			saturar
 
-	
-			add esi, ecx	; ecx tiene el WIDTHSTEP, acordate!
-			dec edx 	 ; acá puse el edx+edi = a22
-			mov[edi+edx], al ;lo muevo al dest sat
+			add esi, ecx		;ecx tiene el WIDTHSTEP, acordate!
+			dec edx 	 	;acá puse el edx+edi = a22
+			mov[edi+edx], al 	;lo muevo al dest sat
 
-	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;	
-	
 
-	mascaraY:			; | -1 -1 -1 | 
-					; |  0  0  0 |	
-					; |  1  1  1 |
+		mascaraY:
+			xor eax, eax		;el valor a guardar
 
 			sub esi, ecx 
 			dec edx  	;esi+edx = a11
-
-
-			xor ebx, ebx
-			mov bl, [esi+edx]
-			sub eax, ebx 	; eax = -a11
+			restaLocal	;eax=-a11
 			
-			inc edx		;[edx+esi] = a12
-			xor ebx,ebx
-			mov bl, [esi+edx]
-			sub eax, ebx 	;eax = -a11 -a12
+			inc edx		;edx+esi = a12
+			restaLocal	;eax=-a11-a12
 			
-			inc edx
-			xor ebx,ebx
-			mov bl, [esi+edx]
-			sub eax, ebx	;termine primera fila
+			inc edx		;esi+edx=a13
+			restaLocal	;eax=-a11-a12-a13
 
-			sub edx,2	;primera columna
 			add esi, ecx
-			add esi, ecx	;bajo dos filas
-	
-			xor ebx,ebx
-			mov bl, [esi+edx] ; bl ahora es a31
-			add eax, ebx
+			add esi, ecx	;esi+eax=a33
+			sumaLocal	;eax=-a11-a12-a13+a33
 		
-			inc edx		;voy al a32
-			xor ebx,ebx
-			mov bl,[esi+edx]
-			add eax, ebx
+			dec edx		;esi+eax=a32
+			sumaLocal	;eax=-a11-a12-a13+a33+a32
 			
-			inc edx
-			xor ebx,ebx
-			mov bl,[esi+edx]
-			add eax, ebx	;sume el a33, terminé
+			dec edx		;esi+eax=a31
+			sumaLocal	;eax=-a11-a12-a13+a33+a32+a31
 
 			saturar		;saturo eax, maskY
-
+			
 			;volvemos el invariante
 			sub esi, ecx	
-			dec edx		;esi+edx = a22
+			inc edx		;esi+edx = a22
 
 			xor ebx, ebx
-			mov ebx, [edi+edx] ;maskX en el ebx
+			mov bl, [edi+edx] ;maskX en el bl
 
 			add eax,ebx	;sumo mascaras
 			saturar		;saturo
 
 			mov [edi+edx],al
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;	
-
-		;ahora hay q poner en SRC[a11] a al
-;com		mov [edi+edx], al
-
 		inc edx
 		cmp edx, WIDTH
 		jne cicloC

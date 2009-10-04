@@ -1,21 +1,36 @@
 ;ALGORITMO DE DETECCION DE BORDES DE SOBEL
 ;---------------------------------------------
 ;PROTOTIPO: void asmSobel(const char* src, char* dst, int ancho, int alto, int xorder, int yorder);
-;PARA REFERENCIA EN LOS COMENTARIOS TENEMOS LA MASCARA
-;m11|m12
-;m21|m22
-;Y LLAMAMOD DE IGAUL MANERA PERO CON a
-;A LOS ELEMTOS DE LA IMAGEN
-;---------------------------------------------
-;para obtener el elemento Aij = j+i*width
-;no se devuelve nada asi que podemos usar
-;todos los registros: EAX, EBX, ECX, EDX, ESI, EDI
 
 global asmSobel
 %define SRC [EBP+8]	;donde empieza la matriz de la imagen original
 %define DST [EBP+12]	;donde empieza la matriz de los datos a guardar
 %define WIDTH [EBP+16]	;el ancho de la imagen
 %define HEIGHT [EBP+20]	;el alto de la imagen
+%define XOrder [EBP+24] ;el XOrder
+%define YOrder [EBP+28] ;el YOrder
+%define WIDTHSTEP [EBP-4];variable local donde se almacena el valor temporal
+
+%macro saturar 0
+	xor ebx, ebx
+	cmp eax, 0
+	cmovl eax, ebx
+	mov ebx, 255
+	cmp eax, 255
+	cmovg eax,ebx
+%endmacro
+
+%macro restaLocal 0
+	xor ebx, ebx
+	mov bl, [esi+edx]
+	sub eax, ebx
+%endmacro
+
+%macro sumaLocal 0
+	xor ebx, ebx
+	mov bl, [esi+edx]
+	add eax, ebx
+%endmacro
 
 section .text
 
@@ -24,62 +39,132 @@ asmSobel:  ;funcion a la que se llama
 	;hacemos los push basicos
 	push ebp
 	mov ebp, esp
+	sub esp, 4
 	push esi
 	push edi
 	push ebx
 	
-	;aca empieza la posta
-	;usamos ecx como contador de fila y ebx como contador de columnas
-	;entotonces Aij = A(ecx)(ebx) = a[ebx + ecx*width]
-	xor ecx, ecx	;fila = 0
-	;xor ebx, ebx	;col = 0 
+	;rutina para calcualr WISTHSTEP
+	mov eax, WIDTH
+	test eax, 2
+	je iniWithS
+	shr eax, 2
+	inc eax
+	shl eax, 2
+	mov DWORD WIDTHSTEP, eax
+	jmp comenzarRutina
+iniWithS:
+	mov WIDTHSTEP, eax
 
+comenzarRutina:
+	dec DWORD WIDTH	;hacemos que recorra hasta WIDHT-1
+	dec DWORD HEIGHT;hacemos que recorra hasta HEIGHT-1
+
+	xor ecx, ecx	;fila actual
+	inc ecx		;para q salga una fila antes
+	mov esi, SRC	;pos fila actual src
+	mov edi, DST	;pos fila dst
+
+;recordemos q esi+edx es la posicion a22 de la matriz actual (el centro)
 cicloF:
-	xor ebx, ebx	;col = 0
+	xor edx, edx 		;columna actual
+	inc edx			;para que empiece desde la segunda fila
+	push ecx		;ACA VAMOS A HACER UNA MARAVILLA, ECX NO ACCEDE A MEMORIA EEEE
+	mov ecx, WIDTHSTEP
 	cicloC:
-		;NO PODEMOS ACCEDER DIRECTO A Aij, necesitamos hacer DST+EBX+ECX*WIDTH
-		;la multiplicacion se guarda implicitamente en eax, trabajamos segun eso
-		;supongo q la multiplicacion entra en eax????? preguntar IMPORTANTE IMPORTANTE
+		cmp DWORD XOrder, 1
+		jne pasarX
+		mascaraX:
+			xor eax, eax		;eax es el valor q queda
+			;aca esi esta en la posicion 1 de la fila actual
+			;vamos a ir cambiando esi y edx pero al final va a estar en elmismo lugar (invariante (?))
+			sub esi, ecx
+			dec edx			;esi+edx=a11
+			restaLocal		;eax=-a11
 
-		mov eax, ecx	;eax=fila
-		mul DWORD WIDTH	;eax=fila*widht
-		add eax, SRC	;eax = DST + WIDTH*FILA = POS FILA BIEN
-		add eax, ebx	;eax=a11
-		xor esi, esi	;esi va a ser el valor a poner
-		mov esi, [eax]	;esi = (m11*a11)
+			add esi, ecx		;esi+edx=a21
+			restaLocal		;eax=-a11-a21
+			restaLocal		;eax=-a11-2*a21
 
-		add eax, WIDTH	;eax=a21
-		inc eax		;eax=a22
-		sub esi, [eax]	;esi=a11-a22
-		jns ponerPositivo  ;hacer modulo... 
+			add esi, ecx		;esi+edx=a31
+			restaLocal		;eax=-a11-2*a21-a31
 
-	cont:
-		mov eax, ecx
-		mul DWORD WIDTH
-		add eax, DST
-		add eax, ebx
+			add edx, 2		;esi+edx=a33
+			sumaLocal		;eax=-a11-2*a21-a31+a33
 
-		mov [eax], esi
+			sub esi, ecx		;esi+edx=a23
+			sumaLocal		;eax=-a11-2*a21-a31+a33+a32
+			sumaLocal		;eax=-a11-2*a21-a31+a33+2*a32
+
+			sub esi, ecx		;esi+edx=a13
+			sumaLocal		;eax=-a11-2*a21-a31+a33+2*a32+a31
+
+			saturar
+
+			add esi, ecx		;ecx tiene el WIDTHSTEP, acordate!
+			dec edx 	 	;acá puse el edx+edi = a22
+			mov[edi+edx], al 	;lo muevo al dest sat
+		pasarX:
+			cmp DWORD YOrder, 1
+			jne pasarY
+		mascaraY:
+			xor eax, eax		;el valor a guardar
+
+			sub esi, ecx 
+			dec edx  	;esi+edx = a11
+			restaLocal	;eax=-a11
+			
+			inc edx		;edx+esi = a12
+			restaLocal	;eax=-a11-a12
+			restaLocal	;eax=-a11-2*a12
+			
+			inc edx		;esi+edx=a13
+			restaLocal	;eax=-a11-2*a12-a13
+
+			add esi, ecx
+			add esi, ecx	;esi+eax=a33
+			sumaLocal	;eax=-a11-2*a12-a13+a33
 		
-		;vemos si se repite el clicl
-		inc ebx ;columna++
-		cmp ebx, WIDTH	;ver si queda algun 
-		jl cicloC	;hago el recorro la columna mientras este en rango
+			dec edx		;esi+eax=a32
+			sumaLocal	;eax=-a11-2*a12-a13+a33+a32
+			sumaLocal	;eax=-a11-2*a12-a13+a33+2*a32
+			
+			dec edx		;esi+eax=a31
+			sumaLocal	;eax=-a11-2*a12-a13+a33+2*a32+a31
 
-	inc ecx	;fila++
+			saturar		;saturo eax, maskY
+			
+			;volvemos el invariante
+			sub esi, ecx	
+			inc edx		;esi+edx = a22
+
+			xor ebx, ebx
+			mov bl, [edi+edx] ;maskX en el bl
+
+			add eax,ebx	;sumo mascaras
+			saturar		;saturo
+
+			mov [edi+edx],al
+		pasarY:
+
+		inc edx
+		cmp edx, WIDTH
+		jne cicloC
+
+	;aca sigue cicloF
+	add esi, ecx 
+	add edi, ecx
+	pop ecx
+	inc ecx
 	cmp ecx, HEIGHT
-	jl cicloF	;hago el recorrido de las filas mientras este en rango
-
-
+	jne cicloF
 
 fin:
 	;hacemos los pop basicos
 	pop ebx
 	pop edi
 	pop esi
+	add esp, 4
 	pop ebp
 	ret ;vovlemos
 
-ponerPositivo:
-	neg esi
-	jmp cont
