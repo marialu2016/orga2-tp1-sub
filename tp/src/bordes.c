@@ -27,7 +27,7 @@ int cSobel(const char* srcData, char* dstData, int ancho, int alto, int xorder, 
 char calcularPuntoSobel(const char* imgData, int widthStep, int r, int c, int type) {
     int valor=0;
     char ret=0;
-    int coef[3][3] = {{-2,-2,0},{-2,0,2},{0,2,2} } ;
+    int coef[3][3] = {{-1,0,1},{-1,0,1},{-1,0,1} } ;
     if(type==1) {
         int a11 = c-1 + (r-1)*widthStep;
         int a12 = a11 + 1;
@@ -43,7 +43,6 @@ char calcularPuntoSobel(const char* imgData, int widthStep, int r, int c, int ty
             (coef[2][0]*(unsigned char)imgData[a31]) + (coef[2][1]*(unsigned char)imgData[a32]) + (coef[2][2]*(unsigned char)imgData[a33]);
 
     }
-    valor+=127;
     if(valor<0)
         return 0;
     if(valor>255)
