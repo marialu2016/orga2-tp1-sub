@@ -1,21 +1,22 @@
-;ALGORITMO DE DETECCION DE BORDES DE PREWITT
+;ALGORITMO DE DETECCION DE IMAGENES DE PREWITT
 ;---------------------------------------------
 ;PROTOTIPO: void asmPrewitt(const char* src, char* dst, int ancho, int alto);
-;PARA REFERENCIA EN LOS COMENTARIOS TENEMOS LA MASCARA
-;m11|m12
-;m21|m22
-;Y LLAMAMOD DE IGAUL MANERA PERO CON a
-;A LOS ELEMTOS DE LA IMAGEN
-;---------------------------------------------
-;para obtener el elemento Aij = j+i*width
-;no se devuelve nada asi que podemos usar
-;todos los registros: EAX, EBX, ECX, EDX, ESI, EDI
 
 global asmPrewitt
 %define SRC [EBP+8]	;donde empieza la matriz de la imagen original
 %define DST [EBP+12]	;donde empieza la matriz de los datos a guardar
 %define WIDTH [EBP+16]	;el ancho de la imagen
 %define HEIGHT [EBP+20]	;el alto de la imagen
+%define WIDTHSTEP [EBP-4];variable local donde se almacena el valor temporal
+
+%macro saturar 0
+	xor ebx, ebx
+	cmp eax, 0
+	cmovl eax, ebx
+	mov ebx, 255
+	cmp eax, 255
+	cmovg eax,ebx
+%endmacro
 
 section .text
 
@@ -24,62 +25,93 @@ asmPrewitt:  ;funcion a la que se llama
 	;hacemos los push basicos
 	push ebp
 	mov ebp, esp
+	sub esp, 4
 	push esi
 	push edi
 	push ebx
 	
-	;aca empieza la posta
-	;usamos ecx como contador de fila y ebx como contador de columnas
-	;entotonces Aij = A(ecx)(ebx) = a[ebx + ecx*width]
-	xor ecx, ecx	;fila = 0
-	;xor ebx, ebx	;col = 0 
+	dec DWORD WIDTH	;hacemos que recorra hasta WIDHT-1
+	;rutina para calcualr WISTHSTEP
+	mov eax, WIDTH
+	test eax, 2
+	je comenzarRutina
+	shr eax, 2
+	inc eax
+	shl eax, 2
+	mov DWORD WIDTHSTEP, eax
 
+comenzarRutina:
+	xor ecx, ecx	;fila actual
+	inc ecx		;para q salga una fila antes
+	mov esi, SRC	;pos fila actual src
+	mov edi, DST	;pos fila dst
+
+;recordemos q esi+edx es la posicion a22 de la matriz actual (el centro)
 cicloF:
-	xor ebx, ebx	;col = 0
+	xor edx, edx ;columna actual
+	push ecx		;ACA VAMOS A HACER UNA MARAVILLA, ECX NO ACCEDE A MEMORIA EEEE
+	mov ecx, WIDTHSTEP
 	cicloC:
-		;NO PODEMOS ACCEDER DIRECTO A Aij, necesitamos hacer DST+EBX+ECX*WIDTH
-		;la multiplicacion se guarda implicitamente en eax, trabajamos segun eso
-		;supongo q la multiplicacion entra en eax????? preguntar IMPORTANTE IMPORTANTE
+		mascaraX:
+			xor eax, eax		;eax es el valor q queda
+			;aca esi esta en la posicion 1 de la fila actual
+			;vamos a ir cambiando esi y edx pero al final va a estar en elmismo lugar (invariante (?))
+			sub esi, ecx
 
-		mov eax, ecx	;eax=fila
-		mul DWORD WIDTH	;eax=fila*widht
-		add eax, SRC	;eax = DST + WIDTH*FILA = POS FILA BIEN
-		add eax, ebx	;eax=a11
-		xor esi, esi	;esi va a ser el valor a poner
-		mov esi, [eax]	;esi = (m11*a11)
+			dec edx			;esi+edx=a11
+			xor ebx, ebx
+			mov bl, [esi+edx]
+			sub eax, ebx		;eax = -a11
 
-		add eax, WIDTH	;eax=a21
-		inc eax		;eax=a22
-		sub esi, [eax]	;esi=a11-a22
-		jns ponerPositivo  ;hacer modulo... 
+			add esi, ecx		;esi+edx=a31
+			xor ebx, ebx
+			mov bl, [esi+edx]
+			sub eax, ebx		;eax = -a11-a21
 
-	cont:
-		mov eax, ecx
-		mul DWORD WIDTH
-		add eax, DST
-		add eax, ebx
+			add esi, ecx		;esi+edx=a31
+			xor ebx, ebx
+			mov bl, [esi+edx]
+			sub eax, ebx		;eax= -a11-a21-a31
 
-		mov [eax], esi
-		
-		;vemos si se repite el clicl
-		inc ebx ;columna++
-		cmp ebx, WIDTH	;ver si queda algun 
-		jl cicloC	;hago el recorro la columna mientras este en rango
+			add edx, 2		;esi+edx=a33
+			xor ebx, ebx
+			mov bl, [esi+edx]
+			add eax, ebx		;eax+= a33
 
-	inc ecx	;fila++
+			sub esi, ecx		;esi+edx=a23
+			xor ebx, ebx
+			mov bl, [esi+edx]
+			add eax, ebx		;eax+= a23
+
+			sub esi, ecx		;esi+edx=a13
+			xor ebx, ebx
+			mov bl, [esi+edx]
+			add eax, ebx		;eax+= a13
+			saturar
+			;volvemos el invariante
+			add esi, ecx
+			dec edx
+
+		;ahora hay q poner en SRC[a11] a al
+		mov [edi+edx], al
+
+		inc edx
+		cmp edx, WIDTH
+		jne cicloC
+	;aca sigue cilcoF
+	add esi, ecx 
+	add edi, ecx
+	pop ecx
+	inc ecx
 	cmp ecx, HEIGHT
-	jl cicloF	;hago el recorrido de las filas mientras este en rango
-
-
+	jne cicloF
 
 fin:
 	;hacemos los pop basicos
 	pop ebx
 	pop edi
 	pop esi
+	add esp, 4
 	pop ebp
 	ret ;vovlemos
 
-ponerPositivo:
-	neg esi
-	jmp cont

@@ -16,8 +16,7 @@ global asmRoberts
 %define DST [EBP+12]	;donde empieza la matriz de los datos a guardar
 %define WIDTH [EBP+16]	;el ancho de la imagen
 %define HEIGHT [EBP+20]	;el alto de la imagen
-%define VAL [EBP-4]	;variable local donde se almacena el valor temporal
-%define WIDTHSTEP WIDTH
+%define WIDTHSTEP [EBP-4];variable local donde se almacena el valor temporal
 
 %macro saturar 0
 	xor ebx, ebx
@@ -41,7 +40,16 @@ asmRoberts:  ;funcion a la que se llama
 	push ebx
 	
 	dec DWORD WIDTH	;hacemos que recorra hasta WIDHT-1
+	;rutina para calcualr WISTHSTEP
+	mov eax, WIDTH
+	test eax, 2
+	je comenzarRutina
+	shr eax, 2
+	inc eax
+	shl eax, 2
+	mov DWORD WIDTHSTEP, eax
 
+comenzarRutina:
 	xor ecx, ecx	;fila actual
 	inc ecx		;para q salga una fila antes
 	mov esi, SRC	;pos fila actual src
