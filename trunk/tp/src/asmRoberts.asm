@@ -57,20 +57,24 @@ comenzarRutina:
 	
 cicloF:
 	xor edx, edx ;columna actual
+	
+	push ecx
+	mov ecx, WIDTHSTEP
+	
 	cicloC:
 		mascaraX:
 			xor eax, eax		;eax es el valor q queda
 			;aca esi esta en la posicion 1 de la fila actual
 			mov al, [esi+edx]	;al = a11
 
-			add esi, WIDTHSTEP	;esi = pos de (fila acutal+1)
+			add esi, ecx;WIDTHSTEP	;esi = pos de (fila acutal+1)
 			inc edx
 	
 			xor ebx, ebx
 			mov bl, [esi+edx]	;bl = a22
 			sub eax, ebx		;eax=a11-a22i
 			saturar
-			sub esi, WIDTHSTEP
+			sub esi, ecx
 		;ahora hay q poner en SRC[a11] a al
 		mov [edi+edx-1], al
 
@@ -82,7 +86,7 @@ cicloF:
 			xor eax, eax	;eax=0
 			mov al, [esi+edx]	;eax = a12
 
-			add esi, WIDTHSTEP
+			add esi, ecx
 			dec edx
 
 			xor ebx, ebx
@@ -90,7 +94,7 @@ cicloF:
 
 			sub eax, ebx	;eax = a21-a12
 			saturar
-			sub esi, WIDTHSTEP ;esi = fila en la que entro y edx en la col necesaria
+			sub esi, ecx	;esi = fila en la que entro y edx en la col necesaria
 
 		;aca hacemos la suma entre ambas mascaras
 		xor ebx, ebx
@@ -103,8 +107,11 @@ cicloF:
 		cmp edx, WIDTH
 		jne cicloC
 	;aca sigue cilcoF
-	add esi, WIDTHSTEP
-	add edi, WIDTHSTEP
+	add esi, ecx
+	add edi, ecx 
+	pop ecx
+
+
 	inc ecx
 	cmp ecx, HEIGHT
 	jne cicloF

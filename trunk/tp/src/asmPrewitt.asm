@@ -48,7 +48,7 @@ comenzarRutina:
 
 ;recordemos q esi+edx es la posicion a22 de la matriz actual (el centro)
 cicloF:
-	xor edx, edx ;columna actual
+	xor edx, edx 		;columna actual
 	push ecx		;ACA VAMOS A HACER UNA MARAVILLA, ECX NO ACCEDE A MEMORIA EEEE
 	mov ecx, WIDTHSTEP
 	cicloC:
@@ -88,17 +88,78 @@ cicloF:
 			mov bl, [esi+edx]
 			add eax, ebx		;eax+= a13
 			saturar
-			;volvemos el invariante
+
+	
+			add esi, ecx	; ecx tiene el WIDTHSTEP, acordate!
+			dec edx 	 ; acá puse el edx+edi = a22
+			mov[edi+edx], al ;lo muevo al dest sat
+
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;	
+	
+
+	mascaraY:			; | -1 -1 -1 | 
+					; |  0  0  0 |	
+					; |  1  1  1 |
+
+			sub esi, ecx 
+			dec edx  	;esi+edx = a11
+
+
+			xor ebx, ebx
+			mov bl, [esi+edx]
+			sub eax, ebx 	; eax = -a11
+			
+			inc edx		;[edx+esi] = a12
+			xor ebx,ebx
+			mov bl, [esi+edx]
+			sub eax, ebx 	;eax = -a11 -a12
+			
+			inc edx
+			xor ebx,ebx
+			mov bl, [esi+edx]
+			sub eax, ebx	;termine primera fila
+
+			sub edx,2	;primera columna
 			add esi, ecx
-			dec edx
+			add esi, ecx	;bajo dos filas
+	
+			xor ebx,ebx
+			mov bl, [esi+edx] ; bl ahora es a31
+			add eax, ebx
+		
+			inc edx		;voy al a32
+			xor ebx,ebx
+			mov bl,[esi+edx]
+			add eax, ebx
+			
+			inc edx
+			xor ebx,ebx
+			mov bl,[esi+edx]
+			add eax, ebx	;sume el a33, terminé
+
+			saturar		;saturo eax, maskY
+
+			;volvemos el invariante
+			sub esi, ecx	
+			dec edx		;esi+edx = a22
+
+			xor ebx, ebx
+			mov ebx, [edi+edx] ;maskX en el ebx
+
+			add eax,ebx	;sumo mascaras
+			saturar		;saturo
+
+			mov [edi+edx],al
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;	
 
 		;ahora hay q poner en SRC[a11] a al
-		mov [edi+edx], al
+;com		mov [edi+edx], al
 
 		inc edx
 		cmp edx, WIDTH
 		jne cicloC
-	;aca sigue cilcoF
+
+	;aca sigue cicloF
 	add esi, ecx 
 	add edi, ecx
 	pop ecx
