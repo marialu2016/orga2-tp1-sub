@@ -13,7 +13,8 @@
 extern void asmRoberts(const char* src, char* dst, int ancho, int alto);
 
 /**
- * Implementación en assembly del operador de Roberts en X y en Y.
+ * Implementación en assembly del operador de Roberts en X y en Y menos eficiente,
+ * que usa la memoria en lugares donde podrían usarse registros.
  */
 extern void asmRobertsPush(const char* src, char* dst, int ancho, int alto);
 
@@ -41,7 +42,7 @@ void mostrarUso() {
     printf("                                                                      "); printf("\n");
     printf("    - ${src}: nombre del archivo de origen                            "); printf("\n");
     printf("    - ${dest}: nombre del archivo de salida SIN EXTENSIÓN             "); printf("\n");
-    printf("    - ${lista de operadores}: una o más de las siguientes expresiones:"); printf("\n");
+    printf("    - ${lista de operadores}: una o más de las siguientes claves:     "); printf("\n");
     printf("                                                                      "); printf("\n");
     printf("             CLAVE | OPERADOR  | DIRECCION | IMPLEMENTACIÓN           "); printf("\n");
     printf("            -------+-----------+-----------+----------------          "); printf("\n");
@@ -59,6 +60,8 @@ void mostrarUso() {
     printf("              c4   |   Sobel   |    Y      |     \"                   "); printf("\n");
     printf("              c5   |   Sobel   |    XY     |     \"                   "); printf("\n");
     printf("                   |           |           |                          "); printf("\n");
+    printf("             push  |  Roberts  |    X      | Assembler usando pila    "); printf("\n");
+    printf("                   |           |           |                          "); printf("\n");
     printf("              byn  |   Escala de grises    |                          "); printf("\n");
     printf("                                                                      "); printf("\n");
     printf("    El programa generará una imagen por cada operador solicitado. El  "); printf("\n");
@@ -73,8 +76,8 @@ void mostrarUso() {
  * Ver contenido de la función mostrarUso() para más detalles.
  */
 int main(int argc, char** argv) {
-    /**/IplImage * src;
-    /**/IplImage * dst;
+    IplImage * src;
+    IplImage * dst;
         
     const char* srcName;
     const char* dstName;
@@ -99,101 +102,100 @@ int main(int argc, char** argv) {
     
     extension = strrchr(srcName, '.');
         
-    /**/src = cvLoadImage(srcName, CV_LOAD_IMAGE_GRAYSCALE);
-    /**/if(!src) {
-    /**/    printf("ERROR: no se pudo abrir la imagen fuente");
-    /**/    return 1;
-    /**/}
-    /**/if(src->origin != 0) {
-    /**/    printf("Formato no reconocido: el 'origin' de OpenCV dio distinto a cero");
-    /**/    return 1;
-    /**/}
+    src = cvLoadImage(srcName, CV_LOAD_IMAGE_GRAYSCALE);
+    if(!src) {
+        printf("ERROR: no se pudo abrir la imagen fuente");
+        return 1;
+    }
+    if(src->origin != 0) {
+        printf("Formato no reconocido: el 'origin' de OpenCV dio distinto a cero");
+        return 1;
+    }
     
     // Por cada operador solicitado...
     for(op = 3; op < argc; op++) {
-    	int i=0;
-    	for(i=0;i<1;i++) {
+    	
 		oper = argv[op];
 		usarSrc = 0;
 	    
 		printf("---- Operador '%s'                                \n", oper);
 	    
 		// Creo la imagen de OpenCV
-		/**/dst = cvCreateImage(cvGetSize(src), IPL_DEPTH_8U, 1);
+		dst = cvCreateImage(cvGetSize(src), IPL_DEPTH_8U, 1);
 		            
 		if(!strcmp(oper, "r1") || !strcmp(oper, "robxy")) {
 		    // Roberts XY
 		    __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
-		    /**/asmRoberts(src->imageData, dst->imageData, src->width, src->height);
+		    asmRoberts(src->imageData, dst->imageData, src->width, src->height);
 		    __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
-		    sufijo = "_roberts";
+		    sufijo = "_asm_roberts";
 		    
 		} else if(!strcmp(oper, "r2") || !strcmp(oper, "prexy")) {
 		    // Prewitt XY
 		    __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
-		    /**/asmPrewitt(src->imageData, dst->imageData, src->width, src->height);
+		    asmPrewitt(src->imageData, dst->imageData, src->width, src->height);
 		    __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
-		    sufijo = "_prewitt";
+		    sufijo = "_asm_prewitt";
 		    
 		} else if(!strcmp(oper, "r3") || !strcmp(oper, "sobx")) {
 		    // Sobel X
 		    __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
-		    /**/asmSobel(src->imageData, dst->imageData, src->width, src->height, 1, 0);
+		    asmSobel(src->imageData, dst->imageData, src->width, src->height, 1, 0);
 		    __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
-		    sufijo = "_sobelX";
+		    sufijo = "_asm_sobelX";
 		
 		} else if(!strcmp(oper, "r4") || !strcmp(oper, "soby")) {
 		    // Sobel Y
 		    __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
-		    /**/asmSobel(src->imageData, dst->imageData, src->width, src->height, 0, 1);
+		    asmSobel(src->imageData, dst->imageData, src->width, src->height, 0, 1);
 		    __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
-		    sufijo = "_sobelY";
+		    sufijo = "_asm_sobelY";
 		
 		} else if(!strcmp(oper, "r5") || !strcmp(oper, "sobxy")) {
 		    // Sobel XY
 		    __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
-		    /**/asmSobel(src->imageData, dst->imageData, src->width, src->height, 1, 1);
+		    asmSobel(src->imageData, dst->imageData, src->width, src->height, 1, 1);
 		    __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
-		    sufijo = "_sobelXY";
+		    sufijo = "_asm_sobelXY";
 		       
 		} else if(!strcmp(oper, "cv3") || !strcmp(oper, "sobxcv")) {
 		    // Sobel X (OPenCV)
 		    __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
-		    /**/cvSobel(src, dst, 1, 0, 3);
+		    cvSobel(src, dst, 1, 0, 3);
 		    __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
-		    sufijo = "_sobelXcv";
+		    sufijo = "_cv_sobelX";
 		
 		} else if(!strcmp(oper, "cv4") || !strcmp(oper, "sobycv")) {
 		    // Sobel Y (OPenCV)
 		    __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
-		    /**/cvSobel(src, dst, 0, 1, 3);
+		    cvSobel(src, dst, 0, 1, 3);
 		    __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
-		    sufijo = "_sobelYcv";
+		    sufijo = "_cv_sobelY";
 		
 		} else if(!strcmp(oper, "cv5") || !strcmp(oper, "sobxycv")) {
 		    // Sobel XY (OPenCV)
 		    __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
-		    /**/cvSobel(src, dst, 1, 1, 3);
+		    cvSobel(src, dst, 1, 1, 3);
 		    __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
-		    sufijo = "_sobelXYcv";
+		    sufijo = "_cv_sobelXY";
 		
 		} else if(!strcmp(oper, "c3") || !strcmp(oper, "sobxc")) {
 		    // Sobel X (C)
-		    /**/tscl = cSobel(src->imageData, dst->imageData, src->width, src->height, 1, 0);
-		    sufijo = "_sobelXc";
+		    tscl = cSobel(src->imageData, dst->imageData, src->width, src->height, 1, 0);
+		    sufijo = "_c_sobelX";
 		
 		} else if(!strcmp(oper, "c4") || !strcmp(oper, "sobyc")) {
 		    // Sobel Y (C)
-		    /**/tscl = cSobel(src->imageData, dst->imageData, src->width, src->height, 0, 1);
-		    sufijo = "_sobelYc";
+		    tscl = cSobel(src->imageData, dst->imageData, src->width, src->height, 0, 1);
+		    sufijo = "_c_sobelY";
 		
 		} else if(!strcmp(oper, "c5") || !strcmp(oper, "sobxyc")) {
 		    // Sobel XY (C)
-		    /**/tscl = cSobel(src->imageData, dst->imageData, src->width, src->height, 1, 1);
-		    sufijo = "_sobelXYc";
+		    tscl = cSobel(src->imageData, dst->imageData, src->width, src->height, 1, 1);
+		    sufijo = "_c_sobelXY";
 		
 		} else if(!strcmp(oper, "byn")) {
-		    // Escala de grises (sin efectos)
+		    // Escala de grises (sin ninguna detección de bordes)
 		    tscl = 0;
 		    usarSrc = 1;
 		    sufijo = "_byn";
@@ -201,10 +203,10 @@ int main(int argc, char** argv) {
 		} else if(!strcmp(oper, "push")) {
 		    // Roberts X usando push/pop
 		    __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
-		    /**/asmRobertsPush(src->imageData, dst->imageData, src->width, src->height);
+		    asmRobertsPush(src->imageData, dst->imageData, src->width, src->height);
 		    __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
-		    sufijo = "_robertsPUSH";            
-		           
+		    sufijo = "_asm_roberts(push)";
+
 		} else {
 		    printf("    ERROR: No se reconoce el operador '%s'\n", oper);
 		    continue;
@@ -222,12 +224,11 @@ int main(int argc, char** argv) {
 		printf("    Guardando en '%s'...\n", filename);
 	    
 		// Guardar resultado
-		/**/cvSaveImage(filename, usarSrc ? src : dst);
+		cvSaveImage(filename, usarSrc ? src : dst);
 		
 		printf("    OK\n");
 		
 		free(filename);
-	}
     }
     
     return 0;
