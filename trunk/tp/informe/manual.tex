@@ -1,9 +1,10 @@
-\section{Manual de usuario}
+\section{Apéndice A: Manual de usuario}
 
 El programa realizado permite aplicar diferentes implementaciones de detección de bordes a imágenes. Tanto el nombre de las imagen fuente como los operadores se indican por línea de comandos de la siguiente manera (suponiendo que el ejecutable está en "exe/bordes"):
 
 
-    \$ exe/bordes {fuente} {destino} {operadores} 
+    \verb=$ exe/bordes {fuente} {destino} {operadores} =
+
     
 Donde:
 
@@ -13,7 +14,8 @@ Donde:
     * destino: es el nombre de las imágenes de salida (generadas por el programa) SIN INCLUIR LA EXTENSIÓN; los archivos generados tendrán ese nombre más un sufijo que indica el operador utilizado, más la extensión; la extensión, el formato y el tamaño son obtenidos de la imagen de entrada;
     
     * operadores: una o más claves separadas por espacio; cada clave representa una implementación particular de detección de bordes; las claves posibles y sus significados son los que siguen:
-    
+
+\begin{verbatim}    
      CLAVE | OPERADOR  | DIRECCION |     IMPLEMENTACIÓN      |      SUFIJO
     -------+-----------+-----------+-------------------------+---------------------
       r1   |  Roberts  |    XY     |       Ensamblador       |   _asm_roberts
@@ -33,12 +35,12 @@ Donde:
      push  |  Roberts  |    X      | Ensamblador usando pila | _asm_roberts(push)
            |           |           |                         |
       byn  |   Escala de grises    |                         |      _byn
-                                                          
+\end{verbatim}                                          
 
-Por ejemplo, si tenemos el ejecutable en "exe/bordes" y una imagen en "pics/lena.bmp", llamando al programa como
+Por ejemplo, si tenemos el ejecutable en \verb="exe/bordes"= y una imagen en \verb="pics/lena.bmp"=, llamando al programa como
 
-    \$ exe/bordes pics/lena.bmp pics/lena byn r1 r2 r3 r4 r5 cv3 cv4 cv5 c3 c4 c5 push
-    
-se aplicarán todas las implementaciones disponibles y se generarán los archivos "pics/lena_asm_roberts.bmp", "pics/lena_asm_prewitt.bmp", etc... Además el programa mostrará por salida estándar la cantidad aproximada de clocks de procesador insumida por cada implementación.
+\verb=  $ exe/bordes pics/lena.bmp pics/lena byn r1 r2 r3 r4 r5 cv3 cv4 cv5 c3 c4 c5 push =
+
+se aplicarán todas las implementaciones disponibles y se generarán los archivos \verb="pics/lena_asm_roberts.bmp", "pics/lena_asm_prewitt.bmp"=, etc... Además el programa mostrará por salida estándar la cantidad aproximada de clocks de procesador insumida por cada implementación.
 
     
