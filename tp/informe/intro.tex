@@ -8,13 +8,12 @@
 La detección de bordes en una imagen consiste en hallar las zonas de la misma en donde el color cambia "abruptamente". Esta herramienta es utilizada tanto para compresión de archivos como para lograr efectos sobre las imágenes.
 
 %Poner "convolución" en cursiva :D
-Los detectores de bordes calculan cómo cambia la intensidad de una imagen entorno a cada uno de sus pixeles. Esto se logra tomando la imagen en escala de grises y aplicando en cada punto un operador de derivación, que es una matriz de números cuyo producto interno con el entorno del punto refleja la tasa de variación de la intensidad. Esta técnica se llama convolución.
+Los detectores de bordes calculan cómo cambia la intensidad de una imagen entorno a cada uno de sus pixeles. Esto se logra tomando la imagen en escala de grises y aplicando en cada punto un operador de derivación, que es una matriz de números cuyo producto interno con el entorno del punto refleja la tasa y dirección de la variación de intensidad. Esta técnica se llama convolución.
 
-Existen muchas matrices de convolución, con diferentes dimensiones y coeficientes. Algunas detectan sólo saltos en una dirección (horizontal, vertical u oblicua), en uno o ambos sentidos. Las de mayores dimensiones permiten un análisis más suave y menos preciso en el que se reducen los efectos del "ruido".
+Existen muchas matrices de convolución, con diferentes dimensiones y coeficientes. En general detectan sólo saltos en una única dirección (horizontal, vertical u oblicua). Las de mayores dimensiones permiten un análisis más suave y menos preciso en el que se reducen los efectos del "ruido".
 
 %poner OpenCV y cvSobel en cursiva o algo así
 En este trabajo hicimos un programa que permite aplicar distintos operadores de derivación a imágenes y visualizar los resultados en forma de una nueva imagen en escala de grises. Las funciones de procesamiento fueron hechas en lenguaje ensamblador, utilizando %poner acá qué parte de intel usamos.
 Medimos la performance de nuestras funciones, en cuanto a cantidad de clocks insumidos por el procesador, comparándolas entre sí y con una implementación de detección de bordes de la biblioteca de procesamiento de imágenes OpenCV (función cvSobel).
 
 En este informe describiremos brevemente el programa realizado, discutiremos las cuestiones surgidas durante su desarrollo y expondremos los resultados y conclusiones extraídos.
-
