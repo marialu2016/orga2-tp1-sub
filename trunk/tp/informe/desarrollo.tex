@@ -10,19 +10,19 @@ El programa que hicimos permite aplicar ciertos operadores de derivación a una 
 %
 
 
-Para cada operador solicitado, aplica la matriz correspondiente en X, luego en Y, y finalmente suma los resultados. Para el caso de Sobel, permite aplicar convolución en una única dirección (X o Y).
+Para cada operador solicitado el programa aplica la matriz correspondiente en X, luego en Y, y finalmente suma los resultados. Para el caso de Sobel, también permite aplicar convolución en una única dirección (X o Y por separado).
 
-%resaltar cvLoadImage y OpenCV
+%destacar cvLoadImage y OpenCV
 La imagen de entrada puede tener cualquier formato que la función cvLoadImage de OpenCV soporte; todos los formatos comunes están incluidos. Por cada operador utilizado se guarda una nueva imagen en escala de grises (con un sufijo en el nombre que indica el operador y la misma extensión y tamaño que la imagen de entrada) que grafica los bordes detectados.
 
-Por último, el programa muestra por salida estádar la cantidad aproximada de clocks utilizada para la ejecución del algoritmo.
+Por último, el programa muestra por salida estádar la cantidad aproximada de clocks de procesador utilizados para la ejecución del algoritmo.
 
-%poner OpenCV y cvSobel en cursiva o algo así
-Las implementaciones están hechas en lenguaje ensamblador, aunque el programa también permite usar la implementación del operador Sobel de la biblioteca OpenCV (función cvSobel), así como también grabar la versión en escala de grises de la imagen de entrada. Por último, realiza también detección de bordes usando una primera implementación del operador de Sobel que hicimos en C para ayudarnos a desarrollar el algoritmo y probar variantes.
+%destacar OpenCV y cvSobel
+Las implementaciones están hechas en lenguaje ensamblador, aunque el programa también permite usar la implementación del operador Sobel de la biblioteca OpenCV (función cvSobel), así como también grabar la versión en escala de grises de la imagen de entrada. Por último, permite también aplicar una primera implementación del operador de Sobel que hicimos en C. Esta implementación fue realizada para ayudarnos a desarrollar el algoritmo.
 
 Para cada punto de la imagen fuente el programa aplica la matriz correspondiente en X, satura el valor a 0 y 255, luego aplica la matriz en Y, satura también su resultado, y finalmente suma ambos coeficientes y satura la suma. Ese valor es grabado en la imagen generada.
 
-Además de la función cvSobel Usamos OpenCV para cargar y guardar imágenes en archivos y transformar imágenes a escala de grises.
+Además de la función cvSobel usamos OpenCV para cargar y guardar imágenes en archivos y transformar imágenes a escala de grises.
 
 
 \subsection{Algoritmos}
@@ -33,7 +33,7 @@ En un píxel en donde la intensidad de la imagen crece hacia la derecha, diremos
 Notar que, en el caso de Prewitt o Sobel, la matriz de convolución en X (que detecta bordes verticales) arroja un resultado positivo en los bordes hacia la derecha y negativo en los bordes hacia la izquierda. Asimismo la matriz de convolución en Y (que detecta bordes horizontales) produce números positivos en bordes hacia abajo y negativos en bordes hacia arriba. Con las matrices de Roberts pasa lo mismo, salvo que los bordes son positivos hacia el noroeste para la matriz X o hacia el noreste para la Y, y negativos hacia el sudeste o sudoeste respectivamente.
 
 %destacar dx, dy
-Hay muchas formas de tratar los valores númerico de la derivación en X y en Y de cada píxel para graficarlos. Con la implementación que hicimos en C de Sobel probamos varias de ellas. Llamaremos dx y dy a los valores obtenidos aplicando derivación en X y en Y.
+Hay muchas formas de tratar los valores númerico de la derivación en X y en Y de cada píxel para graficarlos. Con la implementación que hicimos en C de Sobel probamos varias de ellas. Llamemos dx y dy a los valores obtenidos aplicando derivación en X y en Y respectivamente.
 
 Una opción es graficar un punto cuya intensidad refleje el módulo del vector (dx, dy). De esta manera se obtiene una imagen oscura con los puntos borde más claros. La imagen muestra los bordes en todas las direcciones, aunque no permite distinguir en qué sentido van. Es decir, un borde hacia la derecha se grafica igual que uno hacia la izquierda. Para el cálculo del módulo puede usarse la norma 2 o bien la norma 1, bastante más rápida de computar.
 
@@ -47,21 +47,27 @@ Las variantes que implementamos nosotros son las siguientes:
 
 La idea inicial que teníamos, sugerida en la consigna del trabajo, era implementar la variante 1, que grafica bordes en cualquier dirección. Finalmente, sin embargo, decidimos usar la tercera variante, ya que sus resultados coinciden con los arrojados por la implementación de Sobel de OpenCV, contra la cual deseábamos comparar performance. Esto quiere decir que las imágenes generadas por nuestro programa son oscuras con zonas claras donde la imagen original tiene aumentos de intensidad hacia abajo o hacia la derecha (hacia el noroeste o hacia el noreste en el caso de Roberts). Los bordes que van en sentido contrario no se reflejan de ninguna manera así que es imposible saber dónde están o cuán abruptos son.
 
-La variante 2 produce gráficos diferentes e interesantes de observar. Se pueden ver bordes en ambos sentidos, graficados de manera distinta. Los bordes positivos en blanco y los negativos en negro. Sin embargo no muestra bordes en todas las direcciones. De hecho, el efecto de sumar la derivada en X con la de Y es que los bordes se grafican en una única dirección (una diagonal). Los bordes perpendiculares a esta diagonal hacen que dx se anule con dy y por lo tanto no se visualizan.
+La variante 2 produce gráficos diferentes e interesantes de observar. Se pueden ver bordes en ambos sentidos, graficados de manera distinta. Los bordes positivos se muestran en blanco y los negativos en negro. Sin embargo no muestra bordes en todas las direcciones. De hecho, el efecto de sumar la derivada en X con la de Y es que los bordes se grafican en una única dirección (una diagonal). En los bordes perpendiculares a esta diagonal dx se anula con dy y por lo tanto estos bordes no se visualizan.
 
-En el momento que optamos sumar las derivadas en X y en Y porque la técnica usada por OpenCV parecía ser esa, surgió una idea: en lugar de aplicar la matriz de X, luego la de Y y sumar los resultados, sería más eficiente (y más sencillo de implementar) hacer una sola pasada usando la matriz suma de las dos matrices. Esto razonamiento es, además de intuitivo, matemáticamente correcto.
+En el momento que optamos sumar las derivadas en X y en Y porque esa parecía ser la técnica usada por OpenCV, surgió una idea: en lugar de aplicar la matriz de X, luego la de Y y sumar los resultados, sería más eficiente (y más sencillo de implementar) hacer una sola pasada usando la matriz suma de las dos matrices. Este razonamiento es, además de intuitivo, matemáticamente correcto.
 
-Sin embargo las imágenes generadas aún no eran iguales a las de OpenCV. Algunos bordes, pese a ser "positivos", estaban ocultos. Lo que sucede es que por ejemplo una derivada positiva en X se puede anular con una derivada negativa en Y. Esto hace que se vean casi exclusivamente los bordes que apuntan en dirección sudeste.
+Sin embargo las imágenes generadas haciendo ese "truco" no eran iguales a las de OpenCV. Algunos bordes, pese a ser "positivos", quedaban ocultos. Lo que sucedía era que, usando la matriz suma, por ejemplo una derivada positiva en X se puede anular con una derivada negativa en Y. Esto hace que se vean casi exclusivamente los bordes que apuntan en dirección sudeste.
 
 Finalmente se concluyó que la técnica correcta (para generar dibujos como los de OpenCV) era saturar cada derivada parcial a 0 y a 255 y recién después sumarlas. Como la primera saturación elimina negativos, es imposible que las derivadas se cancelen, y se visualizan todos bordes que apuntan hacia abajo y/o hacia la derecha.
 
 
 \subsection{Implementación}
 
-%%algo sobre el bug de unsigned char
+%destacar "char" y "unsigned char"
+Cuando hicimos la primera implementación (la del operador de Sobel hecha en C) nos topamos con un primer problema: la imagen resultante parecía mostrar los bordes, sin embargo estaba llena de puntos blancos, como si el algoritmo saturara ante el borde más suave. Finalmente resultó que el problema se solucionaba haciendo casts explícitos de los char obtenidos de las imágenes de OpenCV a unsigned char.
 
+%destacar "char" y "unsigned char"
+Dado que la correcta interpretación de las imágenes de OpenCV se realiza tratando los elementos del array imageData como unsigned char, todavía nos preguntamos por qué este campo del struct está declarado como char* (y no como unsigned char*).
+
+%
 %%algo sobre los bugs de assembler
+%
 
-%%algo sobre push/pop vs. registros
+Una vez que tuvimos la primera versión correcta hecha en lenguaje ensamblador (que aplicaba derivación en X mediante el operador de Sobel) nos tuvimos que embarcar en la tarea de mejorar el código. Si bien funcionaba correctamente abusaba de los accesos a memoria ya que para cada píxel estudiado salvaba y recuperaba información usando la pila (instrucciones push y pop). Esto provino del "apuro" por terminar la implementación, sin embargo muy pronto logramos que el algoritmo utilizara sólo los registros (salvo en unos pocos casos).
 
-
+La versión final del trabajo todavía permite ejecutar el programa con esta implementación provisoria de Sobel. Como es posible chequar, la implementación que usa la pila es menos eficiente (toma aproximadamente el doble de tiempo).
