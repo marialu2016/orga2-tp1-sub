@@ -1,0 +1,25 @@
+
+
+
+
+
+                    Lena (512x512)
+                    
+Ensamblador
+-----------
+
+Roberts (XY)                8647096
+Roberts (X usando pila)     18151292
+
+Prewitt (XY)                13677684
+
+Sobel (X)                   8949168
+Sobel (Y)                   10556396
+Sobel (XY)                  15698608
+
+Sobel (X)                   19304400
+Sobel (Y)                   17033632
+Sobel (XY)                  18337884
+
+
+

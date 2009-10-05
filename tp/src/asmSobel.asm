@@ -106,7 +106,9 @@ cicloF:
 			mov[edi+edx], al 	;lo muevo al dest sat
 		pasarX:
 			cmp DWORD YOrder, 1
-			jne pasarY
+			jne pY
+            jmp mascaraY
+        pY: jmp pasarY
 		mascaraY:
 			xor eax, eax		;el valor a guardar
 
