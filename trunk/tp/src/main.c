@@ -205,7 +205,7 @@ int main(int argc, char** argv) {
 		    __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
 		    asmRobertsPush(src->imageData, dst->imageData, src->width, src->height);
 		    __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
-		    sufijo = "_asm_roberts(push)";
+		    sufijo = "_asm_roberts_push";
 
 		} else {
 		    printf("    ERROR: No se reconoce el operador '%s'\n", oper);
