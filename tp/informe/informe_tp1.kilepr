@@ -21,7 +21,7 @@ column=0
 encoding=UTF-8
 highlight=LaTeX
 line=0
-open=true
+open=false
 order=3
 
 [item:desarrollo.tex]
@@ -29,8 +29,8 @@ archive=true
 column=0
 encoding=UTF-8
 highlight=LaTeX
-line=0
-open=true
+line=6
+open=false
 order=4
 
 [item:disc.tex]
@@ -38,8 +38,8 @@ archive=true
 column=0
 encoding=UTF-8
 highlight=LaTeX
-line=0
-open=true
+line=9
+open=false
 order=2
 
 [item:informe_tp1.kilepr]
@@ -53,11 +53,11 @@ order=-1
 
 [item:intro.tex]
 archive=true
-column=0
+column=125
 encoding=UTF-8
 highlight=LaTeX
-line=0
-open=true
+line=19
+open=false
 order=1
 
 [item:main.tex]
@@ -66,14 +66,23 @@ column=0
 encoding=UTF-8
 highlight=LaTeX
 line=134
-open=true
+open=false
 order=0
 
 [item:manual.tex]
 archive=true
-column=56
+column=76
 encoding=UTF-8
 highlight=LaTeX
-line=5
-open=true
+line=32
+open=false
 order=5
+
+[item:res.tex]
+archive=true
+column=27
+encoding=UTF-8
+highlight=LaTeX
+line=4
+open=false
+order=-1

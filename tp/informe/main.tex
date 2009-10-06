@@ -4,9 +4,10 @@
 \usepackage{hyperref}
 \usepackage[pdftex]{graphicx}
 \usepackage{amsfonts}
+\usepackage{amsmath}
 
 \hypersetup{
-  pdftitle={TP1: Procesamiento de Imágenes - Organización del Computador II},
+  pdftitle={TP1A: Procesamiento de Imágenes - Organización del Computador II},
   colorlinks,
   citecolor=black,
   filecolor=black,
@@ -72,7 +73,7 @@
     \begin{flushright}
       %\LARGE \Materia \par
      
-    {\fontsize{10pt}{0pt} {\sffamily J. Enríquez - LU 36/08 - juanenriquez@gmail.com \par N. Gleichgerrcht - 160/08 - nicog89@gmail.com \par J. Luini 143/08 - marianosoy@gmail.com}} \par %se pueden poner los autores
+    {\fontsize{10pt}{0pt} {\sffamily J. Enríquez - LU 36/08 - juanenriquez@gmail.com \par N. Gleichgerrcht - 160/08 - nicog89@gmail.com \par J. Luini 106/08 - jluini@gmail.com}} \par %se pueden poner los autores
      
   
 \end{flushright}
@@ -120,10 +121,10 @@
 \makeatother
 %\title{Juan Martín Enríquez}
 %\author{Tengo un pato}
-\tptit{TP1: Detección de bordes}
+\tptit{TP1A: Detección de bordes}
 \res{
-En el presente trabajo hacemos una investigación comparando las representaciones de punto flotante existentes con una implementación emulada por software que se propone ser más precisa que las disponibles con la desventaja de menor performance en relación a al implementada por hardware.\\
-\parident Para ello exploraremos la frontera del conjunto de Mandelbrot y veremos que sucede al acercarnos con las distintas opciones de manipulación de datos en punto flotante. } % resumen!
+En este trabajo nos proponemos implementar en lenguaje ensamblador, y usando la arquitectura básica de la IA-32, la detección de bordes en imágenes usando convolución. La técnica consiste en detectar las regiones de la imagen en las que la intensidad cambia abruptamente y graficar esos saltos en nuevas imágenes. \\
+\indent Describimos aquí las cuestiones surgidas durante la planificación del algoritmo y su implementación, tarea en la que el énfasis estuvo puesto en maximizar la eficiencia temporal. Además compararemos esa eficiencia con la de una implementación de la biblioteca de procesamiento de imágenes OpenCV y analizaremos las conclusiones surgidas de esa comparación. } % resumen!
 
 \materia{Organización del Computador II}
 \keyvar{Detección Bordes - ASM - Sobel} % palabras claves
