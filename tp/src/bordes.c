@@ -1,5 +1,5 @@
 
-char calcularPuntoSobel(const char* imgData, int widthStep, int r, int c, int type);
+char calcularPuntoSobel(const char* imgData, int widthStep, int r, int c, int xorder, int yorder);
 
 /**
  * Implementación en C del operador de Sobel en X, Y o ambos.
@@ -15,7 +15,7 @@ int cSobel(const char* srcData, char* dstData, int ancho, int alto, int xorder, 
             if(c == 0 || c + 1 >= ancho) {
                 dstData[c + r * widthStep] = 0x00;
             } else {
-                dstData[c + r * widthStep] = calcularPuntoSobel(srcData, widthStep, r, c, 1);
+                dstData[c + r * widthStep] = calcularPuntoSobel(srcData, widthStep, r, c,xorder,yorder);
             }
         }
     }
@@ -24,11 +24,11 @@ int cSobel(const char* srcData, char* dstData, int ancho, int alto, int xorder, 
 }
 
 
-char calcularPuntoSobel(const char* imgData, int widthStep, int r, int c, int type) {
+char calcularPuntoSobel(const char* imgData, int widthStep, int r, int c, int xorder, int yorder) {
     int valor=0;
     char ret=0;
-    int coef[3][3] = {{-1,0,1},{-1,0,1},{-1,0,1} } ;
-    if(type==1) {
+    int coefX[3][3] = {{-1,0,1},{-2,0,2},{-1,0,1} } ;
+    int coefY[3][3] = {{-1,-2,-1},{0,0,0},{1,2,1} } ;
         int a11 = c-1 + (r-1)*widthStep;
         int a12 = a11 + 1;
         int a13 = a11+2;
@@ -38,14 +38,24 @@ char calcularPuntoSobel(const char* imgData, int widthStep, int r, int c, int ty
         int a31 = a21+widthStep;
         int a32 = a31+1;
         int a33 = a31+2;
-        valor = (coef[0][0]*(unsigned char)imgData[a11]) + (coef[0][1]*(unsigned char)imgData[a12]) + (coef[0][2]*(unsigned char)imgData[a13]) +
-            (coef[1][0]*(unsigned char)imgData[a21]) + (coef[1][1]*(unsigned char)imgData[a22]) + (coef[1][2]*(unsigned char)imgData[a23]) +
-            (coef[2][0]*(unsigned char)imgData[a31]) + (coef[2][1]*(unsigned char)imgData[a32]) + (coef[2][2]*(unsigned char)imgData[a33]);
-
-    }
-    if(valor<0)
-        return 0;
-    if(valor>255)
-        return 255;
+        valor=0;
+        if(xorder==1) {
+        	valor = (coefX[0][0]*(unsigned char)imgData[a11]) + (coefX[0][1]*(unsigned char)imgData[a12]) + (coefX[0][2]*(unsigned char)imgData[a13]) +
+            (coefX[1][0]*(unsigned char)imgData[a21]) + (coefX[1][1]*(unsigned char)imgData[a22]) + (coefX[1][2]*(unsigned char)imgData[a23]) +
+            (coefX[2][0]*(unsigned char)imgData[a31]) + (coefX[2][1]*(unsigned char)imgData[a32]) + (coefX[2][2]*(unsigned char)imgData[a33]);
+        }
+        if(valor<0)
+	        valor=0;
+	if(valor>255)
+	        valor=255;
+        if(yorder==1) {
+        	valor += (coefY[0][0]*(unsigned char)imgData[a11]) + (coefY[0][1]*(unsigned char)imgData[a12]) + (coefY[0][2]*(unsigned char)imgData[a13]) +
+            (coefY[1][0]*(unsigned char)imgData[a21]) + (coefY[1][1]*(unsigned char)imgData[a22]) + (coefY[1][2]*(unsigned char)imgData[a23]) +
+            (coefY[2][0]*(unsigned char)imgData[a31]) + (coefY[2][1]*(unsigned char)imgData[a32]) + (coefY[2][2]*(unsigned char)imgData[a33]);
+        }
+       if(valor<0)
+		valor=0;
+	if(valor>255)
+		valor=255;
     return valor;
 }

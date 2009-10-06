@@ -1,40 +1,53 @@
 ;ALGORITMO DE DETECCION DE IMAGENES DE ROBERTS
 ;---------------------------------------------
 ;PROTOTIPO: void asmRoberts(const char* src, char* dst, int ancho, int alto);
-;PARA REFERENCIA EN LOS COMENTARIOS TENEMOS LA MASCARA
-;m11|m12
-;m21|m22
-;Y LLAMAMOD DE IGAUL MANERA PERO CON a
-;A LOS ELEMTOS DE LA IMAGEN
-;---------------------------------------------
-;para obtener el elemento Aij = j+i*width
-;no se devuelve nada asi que podemos usar
-;todos los registros: EAX, EBX, ECX, EDX, ESI, EDI
+;IDEA DEL ALGORITMO
+;----------------------------------------
+;CALCULAMOS EL ANCHO REAL DE LA IMAGEN
+;QUE ES BASICAMENTE EL PRIMER MULTIPLO DE 4 DEL ANCHO DADO.
+;EMPEZAMOS A RECORRER AMBAS MATRICES A LA VES
+;TENEMOS EN UN REGISTRO LA POSICION 1 DE LA FILA ACTUAL, DE CADA MATRIZ
+;EN OTRO LA COLUMA ACTUAL, DE TAL FORMA QUE LA
+;POSICION ACTUAL ES POS1FILA+COLUMA
+;VAMOS RECORRIENDO CON DOS BUCLES ANIDADOS PARA PASAR POR TODO
+;EL ANCHO Y ALTO DE LA IMAGEN, UNA VEZ QUE SE CACLULA EL VALOR
+;LO PONEMOS EN LA IMAGEN NUEVA
+;CALCULAMOS LA DERIVADA DE X e Y DENTRO DEL MISMO CICLO
+;----------------------------------------
+;A TENER EN CUENTA
+;----------------------------------------
+;LLAMAMOS m11, m12
+;	  m21, m22 A CADA PUNTO DE LA MATRIZ
+;POR LA CUAL SE CONVOLUCIONA, Y DE LA MISMA 
+;FORMA PERO CON a A LA ACTUAL MATRIZ CONVOLUCIONADA
+;POR CADA VALOR DE LA MATRIZ GUARDAMOS EL RESULTADO
+;EN LA POSICION a11 Y LA MATRIZ SE RECORRE
+;HASTA WIDTH-1 Y HEIGHT-1 DEBIDO A QUE EN LAS PUNTAS HA RUIDO
 
 global asmRoberts
 %define SRC [EBP+8]	;donde empieza la matriz de la imagen original
 %define DST [EBP+12]	;donde empieza la matriz de los datos a guardar
 %define WIDTH [EBP+16]	;el ancho de la imagen
 %define HEIGHT [EBP+20]	;el alto de la imagen
-%define WIDTHSTEP [EBP-4];variable local donde se almacena el valor temporal
+%define WIDTHSTEP [EBP-4];variable local donde se almacena el WIDTHSTEP
 
-%macro saturar 0
+%macro saturar 0	;satura el numero acutal almacenado en eax
 	xor ebx, ebx
 	cmp eax, 0
-	cmovl eax, ebx
+	cmovl eax, ebx ;si eax<0 entoces pone 0
 	mov ebx, 255
 	cmp eax, 255
-	cmovg eax,ebx
+	cmovg eax,ebx	;si eax>255 entoces pone 255
 %endmacro
 
 section .text
 
 section .data
-asmRoberts:  ;funcion a la que se llama
+asmRoberts:
 	;hacemos los push basicos
 	push ebp
 	mov ebp, esp
-	sub esp, 4
+	sub esp, 4	;variable local para el WIDTHSTEP
 	push esi
 	push edi
 	push ebx
@@ -50,18 +63,21 @@ asmRoberts:  ;funcion a la que se llama
 	jmp comenzarRutina
 iniWithS:
 	mov WIDTHSTEP, eax
+
+
 comenzarRutina:
 	dec DWORD WIDTH	;hacemos que recorra hasta WIDHT-1
-	xor ecx, ecx	;fila actual
-	inc ecx		;para q salga una fila antes
-	mov esi, SRC	;pos fila actual src
-	mov edi, DST	;pos fila dst
+	xor ecx, ecx	;el acumulador de la fila
+	inc ecx		;se pone en 1 para q salga una fila antes
+	mov esi, SRC	;posicion 1 de la fila 1 de la imagen src
+	mov edi, DST	;posicion 1 de la fila 1 de la imagen dst
 	
 cicloF:
-	xor edx, edx ;columna actual
+	xor edx, edx ;acumulador de columna
 	
-	push ecx
-	mov ecx, WIDTHSTEP
+	push ecx		;como a ecx la usamos solo al final de los bucles
+	mov ecx, WIDTHSTEP	;podemos poner ahi el WIDTHSTEP y ahorrarnos varios
+				;accesos a memoria
 	
 	cicloC:
 		mascaraX:
@@ -69,34 +85,31 @@ cicloF:
 			;aca esi esta en la posicion 1 de la fila actual
 			mov al, [esi+edx]	;al = a11
 
-			add esi, ecx;WIDTHSTEP	;esi = pos de (fila acutal+1)
-			inc edx
+			add esi, ecx
+			inc edx			;esi+edx=a22
 	
-			xor ebx, ebx
+			xor ebx, ebx		;reg auxiliar para cuantas
 			mov bl, [esi+edx]	;bl = a22
 			sub eax, ebx		;eax=a11-a22i
 			saturar
-			sub esi, ecx
-		;ahora hay q poner en SRC[a11] a al
-		mov [edi+edx-1], al
+			sub esi, ecx		;esi+edx=a12
 
-		;en la pos posta del dts está el valor de la mascara en x
-		;ahora calcularemos esto en y, y haremos bla bla
-		;esi en la misma fila q entro
-		;edx quedo en una columna despues
+		mov [edi+edx-1], al		;guardamos en el dst el valor de eax
+						;ahi queda guardada la derivada en x
+
 		mascaraY:
-			xor eax, eax	;eax=0
+			xor eax, eax		;eax=0
 			mov al, [esi+edx]	;eax = a12
 
 			add esi, ecx
-			dec edx
+			dec edx			;edi+edx=a21
 
 			xor ebx, ebx
 			mov bl, [esi+edx]
 
 			sub eax, ebx	;eax = a21-a12
 			saturar
-			sub esi, ecx	;esi = fila en la que entro y edx en la col necesaria
+			sub esi, ecx	;esi = fila en la que entro y edx en la col necesaria (a11)
 
 		;aca hacemos la suma entre ambas mascaras
 		xor ebx, ebx
@@ -109,10 +122,9 @@ cicloF:
 		cmp edx, WIDTH
 		jne cicloC
 	;aca sigue cilcoF
-	add esi, ecx
-	add edi, ecx 
-	pop ecx
-
+	add esi, ecx	;esi=primera posicion de la siguiente fila del src
+	add edi, ecx	;edi=primera posicion de la siguiente fila del dst
+	pop ecx		;ecx=numero de fila actual
 
 	inc ecx
 	cmp ecx, HEIGHT
