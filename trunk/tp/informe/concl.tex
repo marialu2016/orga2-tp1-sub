@@ -1,10 +1,7 @@
 \section{Conclusiones}
 
-%%de nuevo, algo de eficiencia
+Como discutimos anteriormente, verificamos el hecho esperado de que nuestras implementaciones no alcanzarían la rapidez de las de OpenCV.
 
+También es nuy notorio cómo se puede llegar a mejorar la performance de un algoritmo implementándolo a tan bajo nivel. Para imágenes de tamaños típicos la ejecución realmente parece instantánea.
 
-%%de nuevo, algo de "incompletitud" de la detección
-
-
-%% comentarios sobre assembler, perspectivas (sse, etc...)
-
+Para mejorar aún más las implementaciones creemos que el camino es aprovechar características más avanzadas de los procesadores modernos, en particular -y como ya mencionamos- la paralelización de cálculos y la utilización de una aritmética saturada más cercana al nivel de hardware. Suponemos que siguiendo este camino podríamos acercarnos mucho a la eficiencia lograda por OpenCV, aunque no tenemos aún las herramientas para verificarlo.
