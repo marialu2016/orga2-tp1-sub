@@ -57,7 +57,7 @@
 \vskip 10\p@
     \hbox{\mbox{%
         \hspace{3pt}%
-        \fbox{}% IMAGEN LOCA
+        \fbox{\includegraphics[width=3em]{ohm.jpg}}% IMAGEN LOCA
         \hspace{4pt}
         }
       \vrule depth 0.9\textheight
@@ -73,7 +73,7 @@
     \begin{flushright}
       %\LARGE \Materia \par
      
-    {\fontsize{10pt}{0pt} {\sffamily J. Enríquez - LU 36/08 - juanenriquez@gmail.com \par N. Gleichgerrcht - 160/08 - nicog89@gmail.com \par J. Luini 106/08 - jluini@gmail.com}} \par %se pueden poner los autores
+    {\fontsize{10pt}{0pt} {\sffamily J. Enríquez - LU 36/08 - juanenriquez@gmail.com \par N. Gleichgerrcht - 160/08 - nicog89@gmail.com \par M. Semelman 143/08 - marianosoy@gmail.com}} \par %se pueden poner los autores
      
   
 \end{flushright}
@@ -121,12 +121,12 @@
 \makeatother
 %\title{Juan Martín Enríquez}
 %\author{Tengo un pato}
-\tptit{TP1A: Detección de bordes}
+\tptit{TP2: Redes Eléctricas}
 \res{
 En este trabajo nos proponemos implementar en lenguaje ensamblador, y usando la arquitectura básica de la IA-32, la detección de bordes en imágenes usando convolución. La técnica consiste en detectar las regiones de la imagen en las que la intensidad cambia abruptamente y graficar esos saltos en nuevas imágenes. \\
 \indent Describimos aquí las cuestiones surgidas durante la planificación del algoritmo y su implementación, tarea en la que el énfasis estuvo puesto en maximizar la eficiencia temporal. Además compararemos esa eficiencia con la de una implementación de la biblioteca de procesamiento de imágenes OpenCV y analizaremos las conclusiones surgidas de esa comparación. } % resumen!
 
-\materia{Organización del Computador II}
+\materia{Métodos Numéricos}
 \keyvar{Detección Bordes - ASM - Sobel} % palabras claves
 
 
@@ -146,9 +146,9 @@ En este trabajo nos proponemos implementar en lenguaje ensamblador, y usando la 
 
 \newpage
 
-%\input{res.tex}
+\input{res.tex}
 
-%\newpage
+\newpage
 
 \input{disc.tex}
 
@@ -158,10 +158,8 @@ En este trabajo nos proponemos implementar en lenguaje ensamblador, y usando la 
 
 \newpage
 
-\input{manual.tex} %Apéndice A: Manual de usuario
-
 %\input{bib.tex}
 
-%\bibliographystyle{acm}
-%\bibliography{biblio.bib}
+\bibliographystyle{acm}
+\bibliography{biblio.bib}
 \end{document}
