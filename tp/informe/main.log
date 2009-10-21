@@ -1,4 +1,4 @@
-This is pdfTeXk, Version 3.141592-1.40.3 (Web2C 7.5.6) (format=pdflatex 2009.6.12)  18 OCT 2009 04:01
+This is pdfTeXk, Version 3.141592-1.40.3 (Web2C 7.5.6) (format=pdflatex 2009.6.12)  6 OCT 2009 16:03
 entering extended mode
  %&-line parsing enabled.
 **main.tex
@@ -461,15 +461,13 @@ LaTeX Info: Redefining \pageref on input line 134.
 \MPscratchDim=\dimen119
 \MPnumerator=\count114
 \everyMPtoPDFconversion=\toks27
-) <ohm.jpg, id=27, 173.64874pt x 173.64874pt>
-File: ohm.jpg Graphic file (type jpg)
- <use ohm.jpg>
+)
 Overfull \hbox (0.6751pt too wide) in paragraph at lines 136--136
 []\OT1/cmr/m/n/9 En este tra-ba-jo nos pro-ponemos im-ple-men-tar en lengua-je 
 en-sam-blador,
  []
 
-<logo_uba.jpg, id=28, 225.4824pt x 231.7458pt>
+<logo_uba.jpg, id=39, 225.4824pt x 231.7458pt>
 File: logo_uba.jpg Graphic file (type jpg)
  <use logo_uba.jpg>
 Overfull \hbox (35.73079pt too wide) in paragraph at lines 136--136
@@ -488,8 +486,17 @@ Overfull \hbox (16.8074pt too wide) in paragraph at lines 136--136
 
 [1
 
-{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map} <./ohm.jpg> <./logo_uba.jpg
->] (./main.toc)
+{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map} <./logo_uba.jpg>]
+(./main.toc
+LaTeX Font Info:    Try loading font information for U+msa on input line 4.
+ (/usr/share/texmf-texlive/tex/latex/amsfonts/umsa.fd
+File: umsa.fd 2002/01/19 v2.2g AMS font definitions
+)
+LaTeX Font Info:    Try loading font information for U+msb on input line 4.
+
+(/usr/share/texmf-texlive/tex/latex/amsfonts/umsb.fd
+File: umsb.fd 2002/01/19 v2.2g AMS font definitions
+))
 \tf@toc=\write4
 \openout4 = `main.toc'.
 
@@ -498,31 +505,160 @@ been already used, duplicate ignored
 <to be read again> 
                    \relax 
 l.139 \newpage
-               [1] (./intro.tex) [2] (./desarrollo.tex) [3] (./res.tex)
-[4] (./disc.tex) [5] (./concl.tex) [6] (./main.bbl
+               [1] (./intro.tex) [2] (./desarrollo.tex
+Overfull \hbox (14.38889pt too wide) in paragraph at lines 11--12
+[]\OT1/cmr/m/n/10 La im-a-gen de en-tra-da puede ten-er cualquier for-ma-to que
+ la fun-ci^^Son \OT1/cmtt/m/n/10 cvLoadImage
+ []
 
-LaTeX Warning: Empty `thebibliography' environment on input line 3.
+[3] [4]) [5] (./disc.tex <graf1.png, id=91, 642.4pt x 481.8pt>
+File: graf1.png Graphic file (type png)
+ <use graf1.png>
+<sobels.png, id=92, 642.4pt x 481.8pt>
+File: sobels.png Graphic file (type png)
+ <use sobels.png> [6 <./graf1.png (PNG copy)>] [7 <./sobels.png (PNG copy)>] <r
+oberts.png, id=107, 642.4pt x 481.8pt>
+File: roberts.png Graphic file (type png)
 
-) [7] (./main.aux) ) 
+<use roberts.png>) [8 <./roberts.png (PNG copy)>] (./concl.tex)
+Overfull \hbox (14.47275pt too wide) in paragraph at lines 7--158
+[]\OT1/cmr/m/n/10 Para mejo-rar a^^Sun m^^Sas las im-ple-menta-ciones creemos q
+ue el camino es aprovechar
+ []
+
+[9] (./manual.tex
+Overfull \hbox (43.49661pt too wide) in paragraph at lines 38--38
+[]     \OT1/cmtt/m/n/10 CLAVE | OPERADOR  | DIRECCION |     IMPLEMENTACI[]ON   
+   |      SUFIJO[] 
+ []
+
+
+Overfull \hbox (90.7462pt too wide) in paragraph at lines 38--38
+[]    \OT1/cmtt/m/n/10 -------+-----------+-----------+------------------------
+-+---------------------[] 
+ []
+
+
+Overfull \hbox (59.24648pt too wide) in paragraph at lines 38--38
+[]      \OT1/cmtt/m/n/10 r1   |  Roberts  |    XY     |       Ensamblador      
+ |   _asm_roberts[] 
+ []
+
+
+Overfull \hbox (59.24648pt too wide) in paragraph at lines 38--38
+[]      \OT1/cmtt/m/n/10 r2   |  Prewitt  |    XY     |          ""            
+ |   _asm_prewitt[] 
+ []
+
+
+Overfull \hbox (53.99652pt too wide) in paragraph at lines 38--38
+[]      \OT1/cmtt/m/n/10 r3   |   Sobel   |    X      |          ""            
+ |   _asm_sobelX[] 
+ []
+
+
+Overfull \hbox (53.99652pt too wide) in paragraph at lines 38--38
+[]      \OT1/cmtt/m/n/10 r4   |   Sobel   |    Y      |          ""            
+ |   _asm_sobelY[] 
+ []
+
+
+Overfull \hbox (59.24648pt too wide) in paragraph at lines 38--38
+[]      \OT1/cmtt/m/n/10 r5   |   Sobel   |    XY     |          ""            
+ |   _asm_sobelXY[] 
+ []
+
+
+Overfull \hbox (53.99652pt too wide) in paragraph at lines 38--38
+[]      \OT1/cmtt/m/n/10 cv3  |   Sobel   |    X      |        OpenCV          
+ |    _cv_sobelX[] 
+ []
+
+
+Overfull \hbox (53.99652pt too wide) in paragraph at lines 38--38
+[]      \OT1/cmtt/m/n/10 cv4  |   Sobel   |    Y      |          ""            
+ |    _cv_sobelY[] 
+ []
+
+
+Overfull \hbox (59.24648pt too wide) in paragraph at lines 38--38
+[]      \OT1/cmtt/m/n/10 cv5  |   Sobel   |    XY     |          ""            
+ |    _cv_sobelXY[] 
+ []
+
+
+Overfull \hbox (48.74657pt too wide) in paragraph at lines 38--38
+[]      \OT1/cmtt/m/n/10 c3   |   Sobel   |    X      |          C             
+ |    _c_sobelX[] 
+ []
+
+
+Overfull \hbox (48.74657pt too wide) in paragraph at lines 38--38
+[]      \OT1/cmtt/m/n/10 c4   |   Sobel   |    Y      |          ""            
+ |    _c_sobelY[] 
+ []
+
+
+Overfull \hbox (53.99652pt too wide) in paragraph at lines 38--38
+[]      \OT1/cmtt/m/n/10 c5   |   Sobel   |    XY     |          ""            
+ |    _c_sobelXY[] 
+ []
+
+
+Overfull \hbox (80.24629pt too wide) in paragraph at lines 38--38
+[]     \OT1/cmtt/m/n/10 push  |  Roberts  |    X      | Ensamblador usando pila
+ | _asm_roberts(push)[] 
+ []
+
+
+Overfull \hbox (32.9967pt too wide) in paragraph at lines 38--38
+[]      \OT1/cmtt/m/n/10 byn  |   Escala de grises    |                        
+ |      _byn[] 
+ []
+
+
+Overfull \hbox (110.99615pt too wide) in paragraph at lines 42--43
+[][]  \OT1/cmtt/m/n/10 $ exe/bordes pics/lena.bmp pics/lena byn r1 r2 r3 r4 r5 
+cv3 cv4 cv5 c3 c4 c5 push  
+ []
+
+
+Overfull \hbox (4.77834pt too wide) in paragraph at lines 44--45
+[]\OT1/cmr/m/n/10 se aplicar^^San to-das las im-ple-menta-ciones disponibles y 
+se gener-ar^^San los archivos
+ []
+
+
+Overfull \hbox (12.1164pt too wide) in paragraph at lines 44--45
+[]\OT1/cmtt/m/n/10 "pics/lena_asm_roberts.bmp", "pics/lena_asm_prewitt.bmp"\OT1
+/cmr/m/n/10 , etc... Adem^^Sas
+ []
+
+) [10] (./main.aux) ) 
 Here is how much of TeX's memory you used:
- 4188 strings out of 94834
- 54153 string characters out of 1179181
- 117586 words of memory out of 1500000
- 7306 multiletter control sequences out of 10000+50000
- 6371 words of font info for 23 fonts, out of 1200000 for 2000
+ 4281 strings out of 94834
+ 55414 string characters out of 1179181
+ 121577 words of memory out of 1500000
+ 7362 multiletter control sequences out of 10000+50000
+ 12650 words of font info for 48 fonts, out of 1200000 for 2000
  212 hyphenation exceptions out of 8191
- 27i,10n,36p,396b,391s stack positions out of 5000i,500n,6000p,200000b,5000s
-</usr/share/texmf-texlive/fonts/type1/bluesky/cm/cmbx10.pfb
-></usr/share/texmf-texlive/fonts/type1/bluesky/cm/cmbx12.pfb></usr/share/texmf-
-texlive/fonts/type1/bluesky/cm/cmbx9.pfb></usr/share/texmf-texlive/fonts/type1/
-bluesky/cm/cmr10.pfb></usr/share/texmf-texlive/fonts/type1/bluesky/cm/cmr7.pfb>
-</usr/share/texmf-texlive/fonts/type1/bluesky/cm/cmr9.pfb></usr/share/texmf-tex
-live/fonts/type1/bluesky/cm/cmss10.pfb></usr/share/texmf-texlive/fonts/type1/bl
-uesky/cm/cmss17.pfb></usr/share/texmf-texlive/fonts/type1/bluesky/cm/cmss9.pfb>
-</usr/share/texmf-texlive/fonts/type1/bluesky/cm/cmssbx10.pfb>
-Output written on main.pdf (8 pages, 307757 bytes).
+ 27i,10n,36p,761b,391s stack positions out of 5000i,500n,6000p,200000b,5000s
+</usr/share/texmf-texlive/fonts/type1/bluesky/cm/cmbx10.pf
+b></usr/share/texmf-texlive/fonts/type1/bluesky/cm/cmbx12.pfb></usr/share/texmf
+-texlive/fonts/type1/bluesky/cm/cmbx9.pfb></usr/share/texmf-texlive/fonts/type1
+/bluesky/cm/cmmi10.pfb></usr/share/texmf-texlive/fonts/type1/bluesky/cm/cmr10.p
+fb></usr/share/texmf-texlive/fonts/type1/bluesky/cm/cmr6.pfb></usr/share/texmf-
+texlive/fonts/type1/bluesky/cm/cmr7.pfb></usr/share/texmf-texlive/fonts/type1/b
+luesky/cm/cmr9.pfb></usr/share/texmf-texlive/fonts/type1/bluesky/cm/cmss10.pfb>
+</usr/share/texmf-texlive/fonts/type1/bluesky/cm/cmss17.pfb></usr/share/texmf-t
+exlive/fonts/type1/bluesky/cm/cmss9.pfb></usr/share/texmf-texlive/fonts/type1/b
+luesky/cm/cmssbx10.pfb></usr/share/texmf-texlive/fonts/type1/bluesky/cm/cmsy10.
+pfb></usr/share/texmf-texlive/fonts/type1/bluesky/cm/cmti10.pfb></usr/share/tex
+mf-texlive/fonts/type1/bluesky/cm/cmti8.pfb></usr/share/texmf-texlive/fonts/typ
+e1/bluesky/cm/cmtt10.pfb>
+Output written on main.pdf (11 pages, 386009 bytes).
 PDF statistics:
- 117 PDF objects out of 1000 (max. 8388607)
- 15 named destinations out of 1000 (max. 131072)
- 67 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 178 PDF objects out of 1000 (max. 8388607)
+ 24 named destinations out of 1000 (max. 131072)
+ 101 words of extra memory for PDF output out of 10000 (max. 10000000)
 
