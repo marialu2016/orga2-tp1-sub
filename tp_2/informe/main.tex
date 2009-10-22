@@ -1,0 +1,159 @@
+\documentclass[a4paper,10pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{hyperref}
+\usepackage[pdftex]{graphicx}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+
+\hypersetup{
+  pdftitle={Orga2 - TP2 - Optimización de la detección de bordes usando SSE},
+  colorlinks,
+  citecolor=black,
+  filecolor=black,
+  linkcolor=black,
+  urlcolor=black 
+}
+
+
+
+%opening
+\makeatletter
+
+\def\materia#1{\def\Materia{#1}}
+\def\tptit#1{\def\tptit{#1}}
+\def\res#1{\def\res{#1}} %variable res
+\def\integrantes#1{\def\integrantes{ {\sffamily {\fontsize{10pt}{0pt} #1} }} }
+
+\def\keyvar#1{\def\keyvar{#1}}
+
+\newcommand{\Res}[1]{
+  
+  \begin{abstract}
+   \vspace*{-1mm}
+  #1
+  \end{abstract}
+    
+}
+
+\newcommand{\keywords}[1]{
+\begin{center}
+{\footnotesize \textbf{Keywords}
+\vskip 4pt
+#1
+
+}
+\end{center}
+}
+
+\renewcommand{\maketitle}{\begin{titlepage}%
+      \vspace*{-100pt} % me copa que quede más arriba
+     \let\footnotesize\small
+    \let\footnoterule\relax
+    \parindent \z@
+    \reset@font
+    \null\vfil
+    
+\vskip 10\p@
+    \hbox{\mbox{%
+        \hspace{3pt}%
+        \fbox{}% IMAGEN LOCA
+        \hspace{4pt}
+        }
+      \vrule depth 0.9\textheight
+      \mbox{\hspace{2em}}
+            \vtop{% %%%%%%%%%%%%%%%%%%
+        \vskip 30\p@
+		  \begin{flushleft}
+      {\sffamily {\huge \tptit}}
+    \end{flushleft}
+    \par
+    \hrule height 4pt
+    \par
+    \begin{flushright}
+      %\LARGE \Materia \par
+     
+    {\fontsize{10pt}{0pt} {\sffamily J. Enríquez - LU 36/08 - juanenriquez@gmail.com \par N. Gleichgerrcht - 160/08 - nicog89@gmail.com \par J. Luini 106/08 - jluini@gmail.com}} \par %se pueden poner los autores
+     
+  
+\end{flushright}
+    \vskip 30\p@
+\Res{\res} % Abstract, pone lo que hay en la variable 'res'
+      \vskip 10\p@
+  \keywords{\keyvar} % keywords!
+
+
+\vfill
+\vspace*{0mm}
+%%%%%%%%%%%%%%%%%%%%%    
+ \begin{minipage}[t]{\textwidth}
+        \begin{minipage}[t]{.55 \textwidth}
+            \includegraphics{logo_uba.jpg}
+        \end{minipage}%%
+	 \hspace*{-7mm}
+        \begin{minipage}[b]{.55 \textwidth}
+            \small{\textbf{\textsf{Facultad de Ciencias Exactas y Naturales}}} \\
+            \textsf{Universidad de Buenos Aires} \\
+            {\scriptsize %
+            %Ciudad Universitaria - (Pabell\'on I/Planta Baja) \\ %% le sacaria el Planta baja y agregaría Depto de computación
+              Ciudad Universitaria - (Pabell\'on I) \\  
+	      Intendente G\"uiraldes 2160 - C1428EGA \\
+            Ciudad Aut\'onoma de Buenos Aires - Rep. Argentina \\
+                Tel/Fax: (54 11) 4576-3359 \\
+            %http://www.fcen.uba.ar \\ %%corregiría la URL
+            http://exactas.uba.ar \\ %%corregiría la URL
+	    }
+        \end{minipage}
+    \end{minipage}%
+%%%%%%%%%%%%%%%%%%%%%%
+%    \vfil
+        }}
+%\vfil
+%\null
+ 
+  \end{titlepage}%
+  \setcounter{footnote}{0}%
+}
+
+
+\makeatother
+%\title{Juan Martín Enríquez}
+%\author{Tengo un orangután}
+\tptit{Optimización de la detección de bordes usando SSE}
+\res{
+En la primera parte de este trabajo hicimos implementaciones de detección y graficación de bordes para ciertos operadores de derivación usando la arquitectura básica de la IA-32. Ahora el objetivo es optimizar dichas implementaciones (prácticamente hacerlas de nuevo) usando características más avanzadas de la familia IA-32: el modelo SIMD y el set de instrucciones SSE. Además, añadiremos a nuestro programa un operador de derivación nuevo que requiere procesamiento en punto flotante. \\
+\indent En este informe presentamos el trabajo realizado en esta segunda parte y las conclusiones obtenidas, incluyendo los problemas surgidos y la comparación de eficiencia entre estas nuevas versiones y las anteriores, entre las nuestras y las de la biblioteca OpenCV, y entre las implementaciones SSE de aritmética entera y la de punto flotante.}
+
+\materia{Organización del Computador II}
+\keyvar{Detección de bordes - IA-32 - SIMD - SSE} % palabras claves
+
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\setlength{\parskip}{0.2cm}
+\newpage
+
+\input{intro.tex}
+
+\newpage
+
+\input{desarrollo.tex}
+
+\newpage
+
+\input{disc.tex}
+
+\newpage
+
+\input{concl.tex}
+
+\newpage
+
+\input{manual.tex} 
+
+
+%\bibliographystyle{acm}
+%\bibliography{biblio.bib}
+\end{document}
