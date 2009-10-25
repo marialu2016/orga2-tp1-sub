@@ -227,9 +227,10 @@ int main(int argc, char** argv) {
 		cvSaveImage(filename, usarSrc ? src : dst);
 		
 		printf("    OK\n");
-		
+			
 		free(filename);
     }
     
+	printf(" ********************* \n\n\n\n");
     return 0;
 }
