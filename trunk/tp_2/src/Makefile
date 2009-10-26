@@ -4,8 +4,8 @@ NASMFLAGS=-f elf
 
 all: clean main
 
-main: bordes.o asmRoberts.o asmPrewitt.o asmSobel.o asmRobertsPush.o asmRobertsSIMD.o
-	gcc main.c -o ../exe/main gpr/asmRoberts.o gpr/asmPrewitt.o gpr/asmSobel.o gpr/asmRobertsPush.o simd/asmRoberts.o `pkg-config --cflags --libs opencv` -ggdb
+main: bordes.o asmRoberts.o asmPrewitt.o asmSobel.o asmRobertsPush.o asmRobertsSIMD.o asmPrewittSIMD.o
+	gcc main.c -o ../exe/main gpr/asmRoberts.o gpr/asmPrewitt.o gpr/asmSobel.o gpr/asmRobertsPush.o simd/asmRoberts.o simd/asmPrewitt.o `pkg-config --cflags --libs opencv` -ggdb
 
 main.o: main.c
 	gcc -ggdb -c  main.c -o main.o `pkg-config --cflags --libs opencv`
