@@ -1,0 +1,15 @@
+\section{Introducción}
+
+La detección de bordes en una imagen consiste en hallar las zonas de la misma en donde el color cambia "abruptamente". Esta herramienta es utilizada tanto para compresión de archivos como para lograr efectos sobre las imágenes.
+
+
+Una manera simple y muy útil de detectar bordes es calculando cómo varía la intensidad o luminosidad de una imagen entorno a cada uno de sus pixeles. Esto se logra tomando la imagen en escala de grises y aplicando en cada punto un operador de derivación, que es una matriz de números cuyo producto interno con el entorno del punto mide la variación de la intensidad en alguna dirección. Esta técnica se llama \textbf{convolución}.
+
+Existen muchas matrices utilizadas para la convolución, con diferentes dimensiones y coeficientes. Las de mayores dimensiones proveen una detección más suave y menos precisa en la que se reducen los efectos del "ruido".
+
+
+En este trabajo hicimos un programa que permite aplicar distintos operadores de derivación a imágenes y visualizar los resultados en forma de nuevas imágenes en escala de grises. Las funciones de procesamiento fueron hechas en lenguaje ensamblador, utilizando la arquitectura ``básica'' de la \texttt{IA-32} con sus registros de propósito general. Cabe destacar que en el presente trabajo no se utilizaron algunas de las extensiones propias de la arquitectura mencionada como ser las instrucciones MMX, SSE, etc. 
+
+Medimos la performance de nuestras funciones, en cuanto a cantidad de clocks insumidos por el procesador, comparándolas entre sí y con una implementación de detección de bordes de la biblioteca de procesamiento de imágenes \textbf{OpenCV} (en particular la función \texttt{cvSobel}).
+
+En este informe describiremos brevemente el programa realizado, discutiremos las cuestiones surgidas durante su desarrollo y expondremos los resultados y conclusiones extraídos.

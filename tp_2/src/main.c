@@ -14,7 +14,7 @@
 */
 extern void asmRobertsSIMD(const char* src, char* dst, int ancho, int alto);
 
-//extern void asmPrewittSIMD(const char* src, char* dst, int ancho, int alto);
+extern void asmPrewittSIMD(const char* src, char* dst, int ancho, int alto);
 
 //extern void asmSobelSIMD(const char* src, char* dst, int ancho, int alto, int xorder, int yorder);
 
@@ -245,7 +245,7 @@ int main(int argc, char** argv) {
 		    asmRobertsSIMD(src->imageData, dst->imageData, src->width, src->height);
 		    __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
 		    sufijo = "_asm_roberts_SIMD";
-/*
+
 //DESCOMENTAR CUANDO ESTEN IMPLEMENTADAS
 
 		} else if(!strcmp(oper, "r2S")) {
@@ -254,7 +254,7 @@ int main(int argc, char** argv) {
 		    asmPrewittSIMD(src->imageData, dst->imageData, src->width, src->height);
 		    __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
 		    sufijo = "_asm_Prewitt_SIMD";
-
+/*
 		} else if(!strcmp(oper, "r3S")) {
 		    // Sobel usando SIMD solo en X
 		    __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
