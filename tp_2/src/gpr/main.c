@@ -1,31 +1,11 @@
 #include <cv.h>
 #include <highgui.h>
 
-#include "gpr/bordes.c"
+#include "bordes.c"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-// VERSIONES SIMD ///
-///////////////////////////////////////////////////////////////////
-/*
- 	Roberts en X e Y versión SIMD
-*/
-extern void asmRobertsSIMD(const char* src, char* dst, int ancho, int alto);
-
-//extern void asmPrewittSIMD(const char* src, char* dst, int ancho, int alto);
-
-//extern void asmSobelSIMD(const char* src, char* dst, int ancho, int alto, int xorder, int yorder);
-
-//extern void asmFreiChenSIMD(const char* src, char* dst, int ancho, int alto);
-
-
-
-
-// VERSIONES GPR (registros de propósito general)
-//////////////////////////////////////////////////////////////////
-
 
 /**
  * Implementación en assembly del operador de Roberts en X y en Y.
@@ -56,10 +36,6 @@ int cSobel(const char* src, char* dst, int ancho, int alto, int xorder, int yord
 
 void mostrarUso() {
     printf("                                                                      "); printf("\n");
-    printf("    DETECCIÓN DE BORDES v. 2.0 (Ahora con extensiones SSE/MMX)        "); printf("\n");
-    printf("    ===================                                               "); printf("\n");
-    printf("                                                                      "); printf("\n");
-    printf("                                                                      "); printf("\n");
     printf("    USO:                                                              "); printf("\n");
     printf("                                                                      "); printf("\n");
     printf("            ./bordes ${src} ${dest} ${lista de operadores}            "); printf("\n");
@@ -87,14 +63,6 @@ void mostrarUso() {
     printf("             push  |  Roberts  |    X      | Assembler usando pila    "); printf("\n");
     printf("                   |           |           |                          "); printf("\n");
     printf("              byn  |   Escala de grises    |                          "); printf("\n");
-    printf("              r6S  | Frei-Chen |    XY     |     Asm + SIMD           "); printf("\n");
-    printf("                                                                      "); printf("\n");
-    printf("                                                                      "); printf("\n");
-    printf("     UPDATE: agregar 'S' a la versión SIMD del operador en cuestión   "); printf("\n");
-    printf("     ej: ./main img.bmp dest r1S // genera Roberts utilizando SIMD    "); printf("\n");
-    printf("                                                                      "); printf("\n");
-    printf("     Agregado además el operador 'r6s'                                "); printf("\n");
-    printf("          que realza bordes mediante el op. de Frei-Chen              "); printf("\n");
     printf("                                                                      "); printf("\n");
     printf("    El programa generará una imagen por cada operador solicitado. El  "); printf("\n");
     printf("nombre de los archivos de salida será ${dest} más un sufijo que indica"); printf("\n");
@@ -238,51 +206,6 @@ int main(int argc, char** argv) {
 		    asmRobertsPush(src->imageData, dst->imageData, src->width, src->height);
 		    __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
 		    sufijo = "_asm_roberts_push";
-	////////
-		} else if(!strcmp(oper, "r1S")) {
-		    // Roberts usando SIMD
-		    __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
-		    asmRobertsSIMD(src->imageData, dst->imageData, src->width, src->height);
-		    __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
-		    sufijo = "_asm_roberts_SIMD";
-/*
-//DESCOMENTAR CUANDO ESTEN IMPLEMENTADAS
-
-		} else if(!strcmp(oper, "r2S")) {
-		    // Prewitt usando SIMD
-		    __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
-		    asmPrewittSIMD(src->imageData, dst->imageData, src->width, src->height);
-		    __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
-		    sufijo = "_asm_Prewitt_SIMD";
-
-		} else if(!strcmp(oper, "r3S")) {
-		    // Sobel usando SIMD solo en X
-		    __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
-		    asmSobelSIMD(src->imageData, dst->imageData, src->width, src->height, 1, 0);
-		    __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
-		    sufijo = "_asm_SobelX_SIMD";
-
-		} else if(!strcmp(oper, "r4S")) {
-		    // Sobel usando SIMD solo en Y
-		    __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
-		    asmSobelSIMD(src->imageData, dst->imageData, src->width, src->height, 0, 1);
-		    __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
-		    sufijo = "_asm_SobelY_SIMD";
-
-		} else if(!strcmp(oper, "r5S")) {
-		    // Sobel usando SIMD XY
-		    __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
-		    asmSobelSIMD(src->imageData, dst->imageData, src->width, src->height, 1, 1);
-		    __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
-		    sufijo = "_asm_SobelXY_SIMD";
-
-		} else if(!strcmp(oper, "r6S")) {
-		    // Sobel usando SIMD solo en Y
-		    __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
-		    asmFreiChenSIMD(src->imageData, dst->imageData, src->width, src->height);
-		    __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
-		    sufijo = "_asm_frei-chen_SIMD";
-*/
 
 		} else {
 		    printf("    ERROR: No se reconoce el operador '%s'\n", oper);
@@ -304,9 +227,10 @@ int main(int argc, char** argv) {
 		cvSaveImage(filename, usarSrc ? src : dst);
 		
 		printf("    OK\n");
-		
+			
 		free(filename);
     }
     
+	printf(" ********************* \n\n\n\n");
     return 0;
 }
