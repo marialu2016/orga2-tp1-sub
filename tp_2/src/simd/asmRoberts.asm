@@ -41,14 +41,15 @@ comenzarRutina:
 cicloF:
 	xor ebx,ebx ;acumulador de columna
 	cmp ecx, 0
-	je fin
-	
+	jne cicloC
+	jmp fin ;xq en 32bit tira error de alcance sino
 	cicloC:
 
 		pxor xmm7, xmm7 	; flasheo el acumulador	
 		cmp edx, ebx
-		je ultCol
-
+		jne sigCol
+		jmp ultCol ;xq en 32 bit tira error de alcanze
+		sigCol:
 		;mascaraX:
 		
 		movdqu	xmm0, [esi]	; cargo 16 elementos de la fila "actual" (x0,x1,...,x15)
