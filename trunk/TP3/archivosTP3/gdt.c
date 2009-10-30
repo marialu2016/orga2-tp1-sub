@@ -22,10 +22,61 @@ gdt_entry gdt[GDT_COUNT] = {
 		(unsigned char) 0, 
 		(unsigned char) 0x00 
 	},
-    /*
-	 * TODO: Completar descriptores de la GDT aqui
-	 */
-	
+
+	/*
+	* EL DESCRIPTOR DE CODIGO
+	*/
+
+	(gdt_entry){
+		(unsigned short) 0xFFFF,	//limite [0:15]
+		(unsigned short) 0x0000,	//base [16:31]
+		(unsigned char) 0x00,		//base [16:23]
+		(unsigned char) 0xA,		//tipo [24]
+		(unsigned char) 1,		//S [25]
+		(unsigned char) 0, 		//DPL [26:27]
+		(unsigned char) 1,		//P [28]
+		(unsigned char) 0xF,		//limite [16:19]
+		(unsigned char) 0,		//AVL [20]
+		(unsigned char) 0,		//L [21]
+		(unsigned char) 1,		//DB [22]
+		(unsigned char) 1,		//G [23]
+		(unsigned char) 0x00		//BASE [24:31]
+	},
+
+	/*
+	* EL DESCRIPTOR DE DATO
+	*/
+	(gdt_entry){
+		(unsigned short) 0xFFFF,	//limite [0:15]
+		(unsigned short) 0x0000,	//base [16:31]
+		(unsigned char) 0x00,		//base []
+		(unsigned char) 0x2,		//tipo [24]
+		(unsigned char) 1,		//S [25]
+		(unsigned char) 0, 		//DPL [26:27]
+		(unsigned char) 1,		//P [28]
+		(unsigned char) 0xF,		//limite [16:19]
+		(unsigned char) 0,		//AVL [20]
+		(unsigned char) 0,		//L [21]
+		(unsigned char) 1,		//DB [22]
+		(unsigned char) 1,		//G [23]
+		(unsigned char) 0x00		//BASE [24:31]
+	},
+	/* EL DESC DE VIDEO */
+	(gdt_entry){
+		(unsigned short) 0x0F9F,	//limite [0:15]
+		(unsigned short) 0x8000,	//base [16:31]
+		(unsigned char) 0x0B,		//base []
+		(unsigned char) 0x2,		//tipo [24]
+		(unsigned char) 1,		//S [25]
+		(unsigned char) 0, 		//DPL [26:27]
+		(unsigned char) 1,		//P [28]
+		(unsigned char) 0x0,		//limite [16:19]
+		(unsigned char) 0,		//AVL [20]
+		(unsigned char) 0,		//L [21]
+		(unsigned char) 1,		//DB [22]
+		(unsigned char) 0,		//G [23]
+		(unsigned char) 0x00		//BASE [24:31]
+	}
 };
 
 /*

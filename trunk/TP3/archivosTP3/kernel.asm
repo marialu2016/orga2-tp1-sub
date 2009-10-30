@@ -24,18 +24,77 @@ bienvenida:
 	IMPRIMIR_MODO_REAL iniciando, iniciando_len, 0x07, 0, 0
 	; Ejercicios AQUI
 
-		jmp $
 
 		; TODO: Habilitar A20
+		CALL enable_A20
+		CALL check_A20
+		xchg bx, bx
 
 		; TODO: Dehabilitar Interrupciones
-		
+		cli
+
+
 	; Ejercicio 1
 		
-		; TODO: Cargar el registro GDTR
+		; Cargamos el descriptor de la GDT
+		lgdt [GDT_DESC]
 		
-		; TODO: Pasar a modo protegido
+		; Pasamos a modo protegido
+		mov 	eax, cr0
+		or  	eax, 01h
+		mov 	cr0, eax
+		jmp 0x08:modoprotegido
 
+BITS 32
+		modoprotegido:
+			
+                        ;;; Apuntamos 'es' a la memoria de video y los demas al segmento de datos
+
+			mov ax, 0x10           ; segmento de datos
+			mov bx, 0x18           ; memoria de video
+			mov ds, ax
+			mov fs, ax
+			mov gs, ax
+			mov ss, ax
+			mov es, bx             ; es apunta a la memoria de video
+	                       
+                        ;;; Pintamos de negro la pantalla
+			mov ecx, 80*25                    ; toda la pantalla
+			xor esi, esi
+
+			mov ax, 0x0000                    ; negro, ningun caracter
+			cleanPantalla:
+				mov [es:esi], ax         
+				add esi, 2                ; avanza al siguiente caracter
+				loop cleanPantalla
+
+
+                        ;;; Dibujamos bordes horizontales
+			mov ah, 0x0F                      ; blanco brillante, fondo negro
+			mov al, 0x02                      ; caracter carita
+			xor esi, esi                      ; 
+			mov edi, 80*25
+			mov ecx, 80
+			bordeHor:
+				mov [es:esi], ax
+				mov [es:edi], ax
+				add esi, 2
+				add edi, 2
+				loop bordeHor
+			
+
+			;;; Dibujamos bordes verticales
+			xor esi, esi
+			mov edi, 79
+			mov ecx, 25
+			bordeVer:
+				mov [es:esi], ax
+				mov [es:edi], ax
+				add esi, 80
+				add edi, 80
+				loop bordeVer
+				
+			jmp $
 	; Ejercicio 2
 		
 		; TODO: Habilitar paginacion
