@@ -28,7 +28,6 @@ bienvenida:
 		; TODO: Habilitar A20
 		CALL enable_A20
 		CALL check_A20
-		xchg bx, bx
 
 		; TODO: Dehabilitar Interrupciones
 		cli
@@ -48,32 +47,32 @@ bienvenida:
 BITS 32
 		modoprotegido:
 			
-                        ;;; Apuntamos 'es' a la memoria de video y los demas al segmento de datos
+                        ;Apuntamos 'es' a la memoria de video y los demas al segmento de datos
 
-			mov ax, 0x10           ; segmento de datos
-			mov bx, 0x18           ; memoria de video
+			mov ax, 0x10	; segmento de datos
+			mov bx, 0x18	; memoria de video
 			mov ds, ax
 			mov fs, ax
 			mov gs, ax
 			mov ss, ax
-			mov es, bx             ; es apunta a la memoria de video
+			mov es, bx	; es apunta a la memoria de video
 	                       
-                        ;;; Pintamos de negro la pantalla
-			mov ecx, 80*25                    ; toda la pantalla
+                        ; Pintamos de negro la pantalla
+			mov ecx, 80*25	;toda la pantalla
 			xor esi, esi
 
-			mov ax, 0x0000                    ; negro, ningun caracter
+			mov ax, 0x0000	; negro, ningun caracter
 			cleanPantalla:
 				mov [es:esi], ax         
-				add esi, 2                ; avanza al siguiente caracter
+				add esi, 2	; avanza al siguiente caracter
 				loop cleanPantalla
 
 
-                        ;;; Dibujamos bordes horizontales
-			mov ah, 0x0F                      ; blanco brillante, fondo negro
-			mov al, 0x02                      ; caracter carita
-			xor esi, esi                      ; 
-			mov edi, 80*25
+                        ; Dibujamos bordes horizontales
+			mov ah, 0x0F		; blanco brillante, fondo negro
+			mov al, 0x02		; caracter carita
+			xor esi, esi 
+			mov edi, 80*24*2
 			mov ecx, 80
 			bordeHor:
 				mov [es:esi], ax
@@ -83,15 +82,15 @@ BITS 32
 				loop bordeHor
 			
 
-			;;; Dibujamos bordes verticales
+			; Dibujamos bordes verticales
 			xor esi, esi
-			mov edi, 79
+			mov edi, 79*2
 			mov ecx, 25
 			bordeVer:
 				mov [es:esi], ax
 				mov [es:edi], ax
-				add esi, 80
-				add edi, 80
+				add esi, 80*2
+				add edi, 80*2
 				loop bordeVer
 				
 			jmp $
