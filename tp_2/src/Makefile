@@ -4,8 +4,8 @@ NASMFLAGS=-f elf
 
 all: clean main
 
-main: bordes.o asmRoberts.o asmPrewitt.o asmSobel.o asmRobertsPush.o asmRobertsSIMD.o asmPrewittSIMD.o
-	gcc main.c -o ../exe/main gpr/asmRoberts.o gpr/asmPrewitt.o gpr/asmSobel.o gpr/asmRobertsPush.o simd/asmRoberts.o simd/asmPrewitt.o `pkg-config --cflags --libs opencv` -g
+main: bordes.o asmRoberts.o asmPrewitt.o asmSobel.o asmRobertsPush.o asmRobertsSIMD.o asmPrewittSIMD.o asmFreichenSIMD.o
+	gcc main.c -o ../exe/main gpr/asmRoberts.o gpr/asmPrewitt.o gpr/asmSobel.o gpr/asmRobertsPush.o simd/asmRoberts.o simd/asmPrewitt.o simd/asmFreichen.o `pkg-config --cflags --libs opencv` -g
 
 main.o: main.c
 	gcc -g -c  main.c -o main.o `pkg-config --cflags --libs opencv`
@@ -35,8 +35,8 @@ asmPrewittSIMD.o: simd/asmPrewitt.asm
 asmSobelSIMD.o: simd/asmSobel.asm
 	nasm -f elf -g -o simd/asmSobel.o simd/asmSobel.asm
 
-asmFreiChenSIMD.o:
-	nasm -f elf -g -o simd/asmFreiChen.o simd/asmFreiChen.asm
+asmFreichenSIMD.o:
+	nasm -f elf -g -o simd/asmFreichen.o simd/asmFreichenSIMD.asm
 
 #clean:
 #	rm -f main
