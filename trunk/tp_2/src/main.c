@@ -7,51 +7,40 @@
 #include <stdlib.h>
 #include <string.h>
 
-// VERSIONES SIMD ///
-///////////////////////////////////////////////////////////////////
-/*
- 	Roberts en X e Y versión SIMD
-*/
+/**************** Implementaciones SIMD *****************/
+/* 
+ * Todas usan registros XMM con el formato de 8 enteros empaquetados de 16 bits
+ * con signo, salvo asmFreichenSIMD(...) que los utiliza como 4 flotantes de
+ * precisión sencilla.
+ */
+
+/* Roberts en X e Y. */
 extern void asmRobertsSIMD(const char* src, char* dst, int ancho, int alto);
 
+/* Prewitt en X e Y. */
 extern void asmPrewittSIMD(const char* src, char* dst, int ancho, int alto);
 
-//extern void asmSobelSIMD(const char* src, char* dst, int ancho, int alto, int xorder, int yorder);
+/* Sobel en X, Y o ambos. */
+//TODO extern void asmSobelSIMD(const char* src, char* dst, int ancho, int alto, int xorder, int yorder);
 
-//extern void asmFreiChenSIMD(const char* src, char* dst, int ancho, int alto);
-
-
-
-
-// VERSIONES GPR (registros de propósito general)
-//////////////////////////////////////////////////////////////////
+/* Frei-chen en X e Y. */
+extern void asmFreichenSIMD(const char* src, char* dst, int ancho, int alto);
 
 
-/**
- * Implementación en assembly del operador de Roberts en X y en Y.
- */
+/**************** Implementaciones GPR *****************/
+/* Implementaciones realizadas en la parte 1 del trabajo con IA-32 básica. */
+
+/* Roberts en X e Y. */
 extern void asmRoberts(const char* src, char* dst, int ancho, int alto);
 
-/**
- * Implementación en assembly del operador de Roberts en X y en Y menos eficiente,
- * que usa la memoria en lugares donde podrían usarse registros.
- */
-extern void asmRobertsPush(const char* src, char* dst, int ancho, int alto);
-
-/**
- * Implementación en assembly del operador de Prewitt en X, Y o ambos.
- */
+/* Prewitt en X e Y. */
 extern void asmPrewitt(const char* src, char* dst, int ancho, int alto);
 
-/**
- * Implementación en assembly del operador de Sobel en X, Y o ambos.
- */
+/* Sobel en X, Y o ambos. */
 extern void asmSobel(const char* src, char* dst, int ancho, int alto, int xorder, int yorder);
 
-/**
- * Implementación en C del operador de Sobel en X, Y o ambos.
- * Devuelve la cantidad de clocks insumidos por el algoritmo.
- */
+/**************** Implementaciones en C *****************/
+
 int cSobel(const char* src, char* dst, int ancho, int alto, int xorder, int yorder);
 
 void mostrarUso() {
@@ -275,14 +264,14 @@ int main(int argc, char** argv) {
 		    asmSobelSIMD(src->imageData, dst->imageData, src->width, src->height, 1, 1);
 		    __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
 		    sufijo = "_asm_SobelXY_SIMD";
-
+*/
 		} else if(!strcmp(oper, "r6S")) {
 		    // Sobel usando SIMD solo en Y
 		    __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
-		    asmFreiChenSIMD(src->imageData, dst->imageData, src->width, src->height);
+		    asmFreichenSIMD(src->imageData, dst->imageData, src->width, src->height);
 		    __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
 		    sufijo = "_asm_frei-chen_SIMD";
-*/
+
 
 		} else {
 		    printf("    ERROR: No se reconoce el operador '%s'\n", oper);
