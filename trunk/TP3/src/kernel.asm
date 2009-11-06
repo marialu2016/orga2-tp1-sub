@@ -43,10 +43,9 @@ bienvenida:
 		or  	eax, 01h
 		mov 	cr0, eax
 		jmp 0x08:modoprotegido
-
+		xchg ebx, ebx
 BITS 32
 		modoprotegido:
-			
                         ;Apuntamos 'es' a la memoria de video y los demas al segmento de datos
 
 			mov ax, 0x10	; segmento de datos
@@ -92,12 +91,17 @@ BITS 32
 				add esi, 80*2
 				add edi, 80*2
 				loop bordeVer
-				
-			jmp $
 	; Ejercicio 2
 		
 		; TODO: Habilitar paginacion
+		mov eax, 0xA000		;cargo la direccion del directorio en cr3
+		mov cr3, eax
 	
+		mov eax, cr0
+		or  eax, 0x80000000		;habilito paginacion
+		mov cr0, eax
+	
+	jmp $
 	; Ejercicio 3
 	
 		; TODO: Inicializar la IDT
@@ -130,3 +134,5 @@ BITS 32
 TIMES TASK1INIT - KORG - ($ - $$) db 0x00
 incbin "pintor.tsk"
 incbin "traductor.tsk"
+TIMES 0xA000 - KORG - ($ - $$) db 0x00
+%include "paging.asm"
