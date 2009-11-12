@@ -93,13 +93,17 @@ BITS 32
 				loop bordeVer
 	; Ejercicio 2
 		
+		jmp $
+
 		; TODO: Habilitar paginacion
-		;mov eax, 0xA000		;cargo la direccion del directorio en cr3
-		;mov cr3, eax
+		mov eax, 0xA000		;cargo la direccion del directorio en cr3
+		mov cr3, eax
 	
-		;mov eax, cr0
-		;or  eax, 0x80000000		;habilito paginacion
-		;mov cr0, eax
+		mov eax, cr0
+		or  eax, 0x80000000		;habilito paginacion
+		mov cr0, eax
+
+		jmp $
 	
 	; Ejercicio 3
 	
@@ -107,45 +111,45 @@ BITS 32
 		; TODO: Resetear la pic
 
 		
-	pic_reset:
-		mov al, 11h
-		out 20h, al
-
-		mov al, 20h
-		out 21h, al
-
-		mov al, 04h
-		out 21h, al
-
-		mov al, 01h
-		out 21h, al
-
-		mov al, 0xFF
-		out 21h, al
-
-		mov al, 0x11
-		out 0xA1, al
-
-		mov al, 0x28
-		out 0xA1, al
-
-		mov al, 0x02
-		out 0xA1, al
-
-		mov al, 0x01
-		out 0xA1, al
-
-		mov al, 0xFF
-		out 0xA1, al
-	pic_enable:
-		mov al, 0x00
-		out 0x21, al
-		mov al, 0x00
-		out 0xA1, al
-
-		; TODO: Cargar el registro IDTR
-		sti
-	jmp $
+; 	pic_reset:
+; 		mov al, 11h
+; 		out 20h, al
+; 
+; 		mov al, 20h
+; 		out 21h, al
+; 
+; 		mov al, 04h
+; 		out 21h, al
+; 
+; 		mov al, 01h
+; 		out 21h, al
+; 
+; 		mov al, 0xFF
+; 		out 21h, al
+; 
+; 		mov al, 0x11
+; 		out 0xA1, al
+; 
+; 		mov al, 0x28
+; 		out 0xA1, al
+; 
+; 		mov al, 0x02
+; 		out 0xA1, al
+; 
+; 		mov al, 0x01
+; 		out 0xA1, al
+; 
+; 		mov al, 0xFF
+; 		out 0xA1, al
+; 	pic_enable:
+; 		mov al, 0x00
+; 		out 0x21, al
+; 		mov al, 0x00
+; 		out 0xA1, al
+; 
+; 		; TODO: Cargar el registro IDTR
+; 		sti
+; 	jmp $
 	; Ejercicio 4
 	
 		; TODO: Inicializar las TSS
