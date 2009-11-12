@@ -91,13 +91,35 @@ BITS 32
             xchg bx, bx
 
     ; Ejercicio 2
-
+        ; 2a - Mapeo de la memoria con paginas
+        
         mov eax, 0xA000        ;cargo la direccion del directorio en cr3
         mov cr3, eax
     
         mov eax, cr0
         or  eax, 0x80000000        ;habilito paginacion
         mov cr0, eax
+
+        ; 2b - Escribir "Orga2   SUB!!!" en la pantalla
+        mov     ecx, mensaje_len
+        
+        ; Usamos 0x13000 porque apunta a la memoria de video
+        mov     edi, 0x13000 + 80 * 2 + 2   ; escribimos desde la posicion (1,1) (segunda fila y columna)
+        
+        mov     ah, 0x1A                    ; letras verdes, fondo azul
+        mov     esi, mensaje
+        
+        .ciclo:
+            mov al, [esi]
+            mov [edi], ax
+            inc esi
+            add edi, 2
+        loop .ciclo
+        
+        jmp fin_mensaje
+        mensaje: db "Orga 2   SUB!!!"
+        mensaje_len equ $ - mensaje
+        fin_mensaje:
 
         ; BREAKPOINT
         xchg bx, bx        
