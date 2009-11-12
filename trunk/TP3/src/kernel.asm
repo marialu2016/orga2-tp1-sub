@@ -92,8 +92,6 @@ BITS 32
 				add edi, 80*2
 				loop bordeVer
 	; Ejercicio 2
-		
-		jmp $
 
 		; TODO: Habilitar paginacion
 		mov eax, 0xA000		;cargo la direccion del directorio en cr3
@@ -172,7 +170,13 @@ BITS 32
 %define KORG 0x1200
 
 TIMES TASK1INIT - KORG - ($ - $$) db 0x00
+
+; 0x8000
 incbin "pintor.tsk"
+
+; 0x9000
 incbin "traductor.tsk"
 TIMES 0xA000 - KORG - ($ - $$) db 0x00
+
+; 0xA000
 %include "paging.asm"
