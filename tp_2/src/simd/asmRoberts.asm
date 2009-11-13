@@ -1,230 +1,141 @@
-;ALGORITMO DE DETECCION DE IMAGENES DE ROBERTS - versión SIMD!
+;ALGORITMO DE DETECCION DE IMAGENES DE ROBERTS
 ;---------------------------------------------
 ;PROTOTIPO: void asmRoberts(const char* src, char* dst, int ancho, int alto);
+;IDEA DEL ALGORITMO
+;----------------------------------------
+;CALCULAMOS EL ANCHO REAL DE LA IMAGEN
+;QUE ES BASICAMENTE EL PRIMER MULTIPLO DE 4 DEL ANCHO DADO.
+;EMPEZAMOS A RECORRER AMBAS MATRICES A LA VES
+;TENEMOS EN UN REGISTRO LA POSICION 1 DE LA FILA ACTUAL, DE CADA MATRIZ
+;EN OTRO LA COLUMA ACTUAL, DE TAL FORMA QUE LA
+;POSICION ACTUAL ES POS1FILA+COLUMA
+;VAMOS RECORRIENDO CON DOS BUCLES ANIDADOS PARA PASAR POR TODO
+;EL ANCHO Y ALTO DE LA IMAGEN, UNA VEZ QUE SE CACLULA EL VALOR
+;LO PONEMOS EN LA IMAGEN NUEVA
+;CALCULAMOS LA DERIVADA DE X e Y DENTRO DEL MISMO CICLO
+;----------------------------------------
+;A TENER EN CUENTA
+;----------------------------------------
+;LLAMAMOS m11, m12
+;	  m21, m22 A CADA PUNTO DE LA MATRIZ
+;POR LA CUAL SE CONVOLUCIONA, Y DE LA MISMA 
+;FORMA PERO CON a A LA ACTUAL MATRIZ CONVOLUCIONADA
+;POR CADA VALOR DE LA MATRIZ GUARDAMOS EL RESULTADO
+;EN LA POSICION a11 Y LA MATRIZ SE RECORRE
+;HASTA WIDTH-1 Y HEIGHT-1 DEBIDO A QUE EN LAS PUNTAS HA RUIDO
 
-global asmRobertsSIMD
-
+global asmRoberts
 %define SRC [EBP+8]	;donde empieza la matriz de la imagen original
 %define DST [EBP+12]	;donde empieza la matriz de los datos a guardar
 %define WIDTH [EBP+16]	;el ancho de la imagen
 %define HEIGHT [EBP+20]	;el alto de la imagen
 %define WIDTHSTEP [EBP-4];variable local donde se almacena el WIDTHSTEP
 
+%macro saturar 0	;satura el numero acutal almacenado en eax
+	xor ebx, ebx
+	cmp eax, 0
+	cmovl eax, ebx ;si eax<0 entoces pone 0
+	mov ebx, 255
+	cmp eax, 255
+	cmovg eax,ebx	;si eax>255 entoces pone 255
+%endmacro
 
 section .text
 
 section .data
-	mask: dd 0xffff_ffff,0xffff_ffff,0xffff_ffff,0xfff_ff00
-
-asmRobertsSIMD:
+asmRoberts:
 	;hacemos los push basicos
 	push ebp
 	mov ebp, esp
-	sub esp, 20 	;variable local para el WIDTHSTEP
+	sub esp, 4	;variable local para el WIDTHSTEP
 	push esi
 	push edi
 	push ebx
 	
+	;rutina para calcualr WISTHSTEP
+	mov eax, WIDTH
+	test eax, 2
+	je iniWithS
+	shr eax, 2
+	inc eax
+	shl eax, 2
+	mov DWORD WIDTHSTEP, eax
+	jmp comenzarRutina
+iniWithS:
+	mov WIDTHSTEP, eax
+
 
 comenzarRutina:
-	mov esi, SRC	; posicion 1 de la fila 1 de la imagen src
-	mov edi, DST	; posicion 1 de la fila 1 de la imagen dst
+	dec DWORD WIDTH	;hacemos que recorra hasta WIDHT-1
+	xor ecx, ecx	;el acumulador de la fila
+	inc ecx		;se pone en 1 para q salga una fila antes
+	mov esi, SRC	;posicion 1 de la fila 1 de la imagen src
+	mov edi, DST	;posicion 1 de la fila 1 de la imagen dst
 	
-	mov edx, WIDTH	; como el ancho es multiplo de 16, es igual al widthstep, uso width entonces
-	mov eax,edx	; me copio el width en eax
-	sar edx, 4	; divido por dos 4 veces = divido x 16 (voy a traer de 16 elementos)
-	mov ecx, HEIGHT ; cantidad de filas	
-	dec ecx
-	pxor xmm7,xmm7 	; registro acumulador del resultado de la matriz
-	;voy a volcar todo a xmm7 antes de grabarlo en el destino
-	dec edx
 cicloF:
-	xor ebx,ebx ;acumulador de columna
-	cmp ecx, 0
-	jne cicloC
-	jmp fin ;xq en 32bit tira error de alcance sino
+	xor edx, edx ;acumulador de columna
+	
+	push ecx		;como a ecx la usamos solo al final de los bucles
+	mov ecx, WIDTHSTEP	;podemos poner ahi el WIDTHSTEP y ahorrarnos varios
+				;accesos a memoria
+	
 	cicloC:
+		mascaraX:
+			xor eax, eax		;eax es el valor q queda
+			;aca esi esta en la posicion 1 de la fila actual
+			mov al, [esi+edx]	;al = a11
 
-		pxor xmm7, xmm7 	; flasheo el acumulador	
-		cmp edx, ebx
-		jne sigCol
-		jmp ultCol ;xq en 32 bit tira error de alcanze
-		sigCol:
-		;mascaraX:
-		
-		movdqu	xmm0, [esi]	; cargo 16 elementos de la fila "actual" (x0,x1,...,x15)
-		inc esi			; muevo esi uno más "adelante"
-		movdqu	xmm1,[esi+eax]	; carga los 16 elementos de abajo de la fila actual desplazados uno
-					; osea (y1,...,y15,16)
-		dec esi			; restauro el invariante (esi siempre sigue a la fila actual)
-
-		pxor xmm6,xmm6
-
-		movdqu xmm2,xmm0	; copio xmm0 a xmm2
-		movdqu xmm3,xmm2 	; copio xmm2 a xmm3
-
-		punpckhbw xmm2, xmm6	; extiendo de bytes a words (parte alta)
-		punpcklbw xmm3,xmm6	; id (parte baja)
-
-		movdqu xmm4, xmm1	; hago lo mismo con la fila siguiente
-		movdqu xmm5, xmm4
-
-		punpckhbw xmm4, xmm6	; parte alta
-		punpcklbw xmm5, xmm6	; parte baja
-
-		psubusw xmm3,xmm5 	;resta partes bajas
-		psubusw xmm2, xmm4	;resta partes altas	
-		
-			
-
-		;resultado en xmm2:xmm3
-		;empaqueto resultados (vuelvo a saturar y a tener bytes en vez de words)
-			
-		packuswb xmm3,xmm2
-		
-		movdqu xmm7,xmm3	; muevo el resultado al acumulador
-
-		
-		;máscaraY
-		;;;;;;;;;;;;;;;;;;;;;;;;
-
-		inc esi			; muevo esi uno más "adelante"
-		movdqu	xmm0, [esi]	; cargo 16 elementos de la fila "actual" (x0,x1,...,x15) despl uno
-		dec esi			; "restauro" el esi
-		movdqu	xmm1,[esi+eax]	; carga los 16 elementos de abajo de la fila actual sin desplazamiento
-					 
-
-		pxor xmm6,xmm6
-
-		movdqu xmm2,xmm0	; copio xmm0 a xmm2
-		movdqu xmm3,xmm2 	; copio xmm2 a xmm3
-
-		punpckhbw xmm2, xmm6	; extiendo de bytes a words (parte alta)
-		punpcklbw xmm3,xmm6	; id (parte baja)
-
-		movdqu xmm4, xmm1	; hago lo mismo con la fila siguiente
-		movdqu xmm5, xmm4
-
-		punpckhbw xmm4, xmm6	; parte alta
-		punpcklbw xmm5, xmm6	; parte baja
-
-		psubusw xmm3,xmm5 	;resta partes bajas
-		psubusw xmm2, xmm4	;resta partes altas	
+			add esi, ecx
+			inc edx			;esi+edx=a22
 	
-		
-			
-		;resultado en xmm2:xmm3
-		;empaqueto resultados (vuelvo a saturar y a tener bytes en vez de words)
-			
-		packuswb xmm3,xmm2
-		
-		paddusb xmm7,xmm3	; sumo el resultado al acumulador
+			xor ebx, ebx		;reg auxiliar para cuantas
+			mov bl, [esi+edx]	;bl = a22
+			sub eax, ebx		;eax=a11-a22i
+			saturar
+			sub esi, ecx		;esi+edx=a12
 
-		movdqu [edi], xmm7 ; muevo el resultado del acum al destino		
+		mov [edi+edx-1], al		;guardamos en el dst el valor de eax
+						;ahi queda guardada la derivada en x
 
+		mascaraY:
+			xor eax, eax		;eax=0
+			mov al, [esi+edx]	;eax = a12
 
-		add esi, 16
-		add edi, 16	; muevo los punteros para la próxima iter
-		inc ebx		; aumento el contador de col
-		jmp cicloC
+			add esi, ecx
+			dec edx			;edi+edx=a21
 
-	ultCol:
-		;maskX
-		
-		movdqu	xmm0, [esi]	;cargo 16 elementos de la fila "actual" (x0,x1,...,x15)
-		movdqu	xmm1,[esi+eax]	;carga los 16 elementos de abajo de la fila actual sin desplazarlos
-		
-;		pslldq xmm1, 1		; hago un shift a la izq en xmm1 tq queda y2,...y15,0
-;		movdqu xmm6, [mask]
-;		pand xmm0, xmm6		; hago x1,x2,...,x14,0 el último byte no lo proceso (borde)
-		pxor xmm6,xmm6
+			xor ebx, ebx
+			mov bl, [esi+edx]
 
-		movdqu xmm2,xmm0	; copio xmm0 a xmm2
-		movdqu xmm3,xmm2 	; copio xmm2 a xmm3
+			sub eax, ebx	;eax = a21-a12
+			saturar
+			sub esi, ecx	;esi = fila en la que entro y edx en la col necesaria (a11)
 
-		punpckhbw xmm2, xmm6	; extiendo de bytes a words (parte alta)
-		punpcklbw xmm3,xmm6	; id (parte baja)
+		;aca hacemos la suma entre ambas mascaras
+		xor ebx, ebx
+		mov bl, [edi+edx]
+		add eax, ebx	;eax=mascY + mascX
+		saturar	
+		mov [edi+edx], al
 
-		movdqu xmm4, xmm1	; hago lo mismo con la fila siguiente
-		movdqu xmm5, xmm4
+		inc edx
+		cmp edx, WIDTH
+		jne cicloC
+	;aca sigue cilcoF
+	add esi, ecx	;esi=primera posicion de la siguiente fila del src
+	add edi, ecx	;edi=primera posicion de la siguiente fila del dst
+	pop ecx		;ecx=numero de fila actual
 
-		punpckhbw xmm4, xmm6	; parte alta
-		punpcklbw xmm5, xmm6	; parte baja
-
-		psubusw xmm3,xmm5 	; resta partes bajas
-		psubusw xmm2, xmm4	; resta partes altas	
-	
-		
-		;resultado en xmm2:xmm3
-		;empaqueto resultados (vuelvo a saturar y a tener bytes en vez de words)
-			
-		packuswb xmm3,xmm2
-		
-		movdqu xmm7,xmm3	; muevo el resultado al acumulador
-		
-	;	movdqu xmm6, [mask]
-	;	pand xmm7, xmm6		; hago x1,x2,...,x14,0 el último byte no lo proceso (borde)
-	;	movdqu [edi], xmm7			
-		pxor xmm6,xmm6
-
-		;máscaraY
-		;;;;;;;;;;;;;;;;;;;;;;;;
-
-		movdqu	xmm0, [esi]	; cargo 16 elementos de la fila "actual" (x0,x1,...,x15) sin despl
-		movdqu	xmm1,[esi+eax]	; carga los 16 elementos de abajo de la fila actual sin desplazamiento
-					
-
-		movdqu xmm6, [mask]
-		;pand xmm1, xmm6		; hago y1,x2,...,y14,0 el último byte no lo proceso (borde)
-		;pslldq xmm0, 1		; hago un shift a la izq en xmm0 tq queda x2,...x15,0
-		pxor xmm6,xmm6
-
-		movdqu xmm2,xmm0	; copio xmm0 a xmm2
-		movdqu xmm3,xmm2 	; copio xmm2 a xmm3
-
-		punpckhbw xmm2, xmm6	; extiendo de bytes a words (parte alta)
-		punpcklbw xmm3,xmm6	; id (parte baja)
-
-		movdqu xmm4, xmm1	; hago lo mismo con la fila siguiente
-		movdqu xmm5, xmm4
-
-		punpckhbw xmm4, xmm6	; parte alta
-		punpcklbw xmm5, xmm6	; parte baja
-
-		psubusw xmm3,xmm5 	;resta partes bajas
-		psubusw xmm2, xmm4	;resta partes altas	
-			
-
-		;resultado en xmm2:xmm3
-		;empaqueto resultados (vuelvo a saturar y a tener bytes en vez de words)
-			
-		packuswb xmm3,xmm2
-		
-		paddusb xmm7,xmm3	; muevo el resultado al acumulador
-
-
-	;	movdqu xmm6, [mask]
-		;pand xmm7, xmm6		; hago x1,x2,...,x14,0 el último byte no lo proceso (borde)
-		movdqu [edi], xmm7			
-		;ebx no lo necesito más a esta altura...
-		
-		shl ebx, 4	; ebx * 16 me tiene que devolver al incio de la fila
-		sub esi, ebx	; re apunto esi, al inicio de la fila
-		sub edi, ebx	; lo mismo con el destino
-		add esi, eax	; les sumo el ancho de la fila entonces ahora los dejé para la próximo ciclo
-		add edi, eax	; osea, una fila más abajo
-		dec ecx
-		jmp cicloF	
-
-		
-	
+	inc ecx
+	cmp ecx, HEIGHT
+	jne cicloF
 
 fin:
-	
+	;hacemos los pop basicos
 	pop ebx
 	pop edi
 	pop esi
-	add esp, 20
+	add esp, 4
 	pop ebp
-	ret
-	
+	ret ;vovlemos
+
