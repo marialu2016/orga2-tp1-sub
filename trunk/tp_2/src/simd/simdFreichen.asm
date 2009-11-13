@@ -2,9 +2,9 @@
 ; resultado como una nueva imagen en 'dst', ambas de 'ancho' x 'alto' píxels. 
 ;    Se asume que 'ancho' es múltiplo de  16.
 ;
-;void asmFreichenSIMD(const char* src, char* dst, int ancho, int alto);
+;void simdFreichen(const char* src, char* dst, int ancho, int alto);
 
-global asmFreichenSIMD
+global simdFreichen
 
 %define SRC        [EBP+8]      ; donde empieza la matriz de la imagen original
 %define DST        [EBP+12]     ; donde empieza la matriz de los datos a guardar
@@ -19,23 +19,7 @@ section .data
 
 section .text
 
-asmFreichenSIMD:
-    
-    ;;;; tiene mmx?
-    mov eax, 1
-    cpuid
-    test edx, 0x4000000
-    jnz hay_mmx
-    
-    inc edx          ; NO HAY sse2
-    jmp sigue
-    
-    hay_mmx: inc edx ; HAY sse2
-    sigue:
-    ;;;;;;;;;;;;;;,
-    
-    
-    
+simdFreichen:
     push ebp        
     mov ebp, esp    ; creo el stack frame
 
@@ -50,9 +34,10 @@ asmFreichenSIMD:
     ;;;
     ;;; CONSTANTES XMM
     ;;;
-    pxor xmm7, xmm7   ; xmm7 todo ceros
+    pxor xmm7, xmm7   ; xmm7 todos los bits en 0
     
     ; xmm6 tiene raíces de dos precisión simple
+    ;; código que no andaba
     ;;movd xmm6, TWO                      ; xmm6 = [  0  |  0  |  0  |  2  ] (entero)
     ;;cvtdq2ps xmm6, xmm6                 ; castea a SP
     ;;sqrtss xmm6, xmm6                   ; xmm6 = [  0  |  0  |  0  |2^1/2] (entero)
@@ -62,39 +47,37 @@ asmFreichenSIMD:
     fld1
     fadd st0, st0
     fsqrt
-    ;movss xmm6, st0
-    
+        
     fstp dword RAIZ_2
-    
+    ;;; Esto no está andando
     movss xmm6, RAIZ_2
     
     shufps xmm6, xmm6, 00000000b        ; xmm6 = [2^1/2|2^1/2|2^1/2|2^1/2] (entero)    
-    
-    
     
     ;;;;;;;;;;;;;;;;;;;;;;;;
     
     mov ebx, WIDTH_AUX        ; ebx = WIDTH
 
-    ; Vamos a recorrer desde 0 hasta width - 2 y desde 0 hasta height - 2
-    dec dword WIDTH
-    dec dword WIDTH
-    dec dword HEIGHT
-    dec dword HEIGHT
-    
     mov esi, SRC         ; esi y edi apuntan a la fila actual de src y dst respectivamente
     mov edi, DST
     
-    xor ecx, ecx         ; ecx es el contador de filas
+    ; recorro (height-2) filas con ecx
+    mov ecx, HEIGHT
+    sub ecx, 2           ; aguante el grupo SUB
     
-
     cicloFilas:
-        xor edx, edx         ; edx es el contador de columnas
+        frei:
+        ; TODO calcular valor de la columna 0 y guardarlo en xmm2_1
+        ; xmm2_2:xmm2_3 deben tener 0 (en float)
         
+        ; recorro columnas desde 1 hasta width, de a 8
+        
+        xor edx, edx         ; edx es el contador de columnas
+        inc edx
 
         ;;; se levantará un bloque de 3x8 pixeles (comenzando en la fila ecx, columna edx, mem[esi+edx])
-        ;;; con ello se calculará la derivada en X de la fila del medio
-       
+        ;;; con ello se calculará la derivada en X de la fila del medio entre (edx-1) y (edx+6)
+     
         cicloColumnas:
 
             ;;;
@@ -106,8 +89,8 @@ asmFreichenSIMD:
             punpcklbw xmm0, xmm7                ; xmm0 = [ 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 ] (fila 1)
             movdqu xmm1, xmm0                   ; xmm1 = xmm0
                                                 
-            punpckhwd xmm0, xmm7                ; xmm0 = [   0   |   1   |   2   |   3   ] (fila 1)
-            punpcklwd xmm1, xmm7                ; xmm1 = [   4   |   5   |   6   |   7   ] (fila 1)
+            punpcklwd xmm0, xmm7                ; xmm0 = [   0   |   1   |   2   |   3   ] (fila 1)
+            punpckhwd xmm1, xmm7                ; xmm1 = [   4   |   5   |   6   |   7   ] (fila 1)
            
             cvtdq2ps xmm0, xmm0                 ; todos son bytes metidos en dwords: los convierto a SP
             cvtdq2ps xmm1, xmm1                 ; 
@@ -124,8 +107,8 @@ asmFreichenSIMD:
             punpcklbw xmm2, xmm7                ; xmm2 = [ 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 ] (fila 2)
             movdqu xmm3, xmm2                   ; xmm3 = xmm2
                                                 
-            punpckhwd xmm2, xmm7                ; xmm2 = [   0   |   1   |   2   |   3   ] (fila 2)
-            punpcklwd xmm3, xmm7                ; xmm3 = [   4   |   5   |   6   |   7   ] (fila 2)
+            punpcklwd xmm2, xmm7                ; xmm2 = [   0   |   1   |   2   |   3   ] (fila 2)
+            punpckhwd xmm3, xmm7                ; xmm3 = [   4   |   5   |   6   |   7   ] (fila 2)
            
             cvtdq2ps xmm2, xmm2                 ; convierte las dwords enteras signadas a SP
             cvtdq2ps xmm3, xmm3                 ; 
@@ -152,8 +135,8 @@ asmFreichenSIMD:
             punpcklbw xmm2, xmm7                ; xmm2 = [ 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 ] (fila 3)
             movdqu xmm3, xmm2                   ; xmm3 = xmm2
                                                 
-            punpckhwd xmm2, xmm7                ; xmm2 = [   0   |   1   |   2   |   3   ] (fila 3)
-            punpcklwd xmm3, xmm7                ; xmm3 = [   4   |   5   |   6   |   7   ] (fila 3)
+            punpcklwd xmm2, xmm7                ; xmm2 = [   0   |   1   |   2   |   3   ] (fila 3)
+            punpckhwd xmm3, xmm7                ; xmm3 = [   4   |   5   |   6   |   7   ] (fila 3)
            
             cvtdq2ps xmm2, xmm2                 ; convierte las dwords enteras signadas a SP
             cvtdq2ps xmm3, xmm3                 ; 
@@ -165,25 +148,30 @@ asmFreichenSIMD:
             addps xmm0, xmm2                    ; suma tercera fila
             addps xmm1, xmm3                    ; en xmm0:xmm1 quedan las tres filas comprimidas
             
-            sub esi, WIDTH                      ; 
-            sub esi, WIDTH                      ; IMPORTANTE: retrocede las filas
-            sub esi, 4
-                                    
+            
+            ;
+            ;
+            ;
+            ; TODO insertar algo útil aquí
+            ;
+            ;
+            ;
+            
+            
+            ; IMPORTANTE: retrocede las filas
+            sub esi, WIDTH
+            sub esi, WIDTH
+                                                
             add edx, 8
             cmp edx, WIDTH
         jl cicloColumnas
         
         
         add esi, WIDTH
-        add esi, 2
-        
         add edi, WIDTH
-        add edi, 2
         
-        inc ecx
-        cmp ecx, HEIGHT
-    jl cicloFilas
-    
+        dec ecx
+    jg cicloFilas
     
     pop ebx              ; restauro los registros
     pop edi    
