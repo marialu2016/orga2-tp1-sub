@@ -3,7 +3,7 @@ img_extIsRegExp=false
 img_extensions=.eps .jpg .jpeg .png .pdf .ps .fig .gif
 kileprversion=2
 kileversion=2.1
-lastDocument=main.tex
+lastDocument=res.tex
 masterDocument=
 name=informe_tp1
 pkg_extIsRegExp=false
@@ -21,26 +21,26 @@ column=0
 encoding=UTF-8
 highlight=LaTeX
 line=0
-open=false
-order=3
+open=true
+order=5
 
 [item:desarrollo.tex]
 archive=true
 column=0
 encoding=UTF-8
 highlight=LaTeX
-line=6
-open=false
-order=4
+line=16
+open=true
+order=3
 
 [item:disc.tex]
 archive=true
-column=0
+column=468
 encoding=UTF-8
 highlight=LaTeX
-line=9
-open=false
-order=2
+line=5
+open=true
+order=1
 
 [item:informe_tp1.kilepr]
 archive=true
@@ -53,36 +53,36 @@ order=-1
 
 [item:intro.tex]
 archive=true
-column=125
+column=22
 encoding=UTF-8
 highlight=LaTeX
-line=19
-open=false
-order=1
+line=0
+open=true
+order=2
 
 [item:main.tex]
 archive=true
-column=0
+column=14
 encoding=UTF-8
 highlight=LaTeX
-line=134
-open=false
+line=163
+open=true
 order=0
 
 [item:manual.tex]
 archive=true
-column=76
+column=6
 encoding=UTF-8
 highlight=LaTeX
-line=32
-open=false
-order=5
+line=8
+open=true
+order=4
 
 [item:res.tex]
 archive=true
-column=27
+column=32
 encoding=UTF-8
 highlight=LaTeX
-line=4
-open=false
-order=-1
+line=41
+open=true
+order=6
