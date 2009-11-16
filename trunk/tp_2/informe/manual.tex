@@ -15,6 +15,7 @@ Donde:
     
     * \texttt{operadores}: una o más claves separadas por espacio; cada clave representa una implementación particular de detección de bordes; las claves posibles y sus significados son los que siguen:
 
+{\small
 \begin{verbatim}    
      CLAVE | OPERADOR  | DIRECCION |     IMPLEMENTACIÓN      |      SUFIJO
     -------+-----------+-----------+-------------------------+---------------------
@@ -35,11 +36,11 @@ Donde:
      push  |  Roberts  |    X      | Ensamblador usando pila | _asm_roberts(push)
            |           |           |                         |
       byn  |   Escala de grises    |                         |      _byn
-\end{verbatim}                                          
+\end{verbatim}  }                                        
 
 Por ejemplo, si tenemos el ejecutable en \verb="exe/bordes"= y una imagen en \verb="pics/lena.bmp"=, llamando al programa como
 
-\verb=  $ exe/bordes pics/lena.bmp pics/lena byn r1 r2 r3 r4 r5 cv3 cv4 cv5 c3 c4 c5 push =
+{\small \verb=  $ exe/bordes pics/lena.bmp pics/lena byn r1 r2 r3 r4 r5 cv3 cv4 cv5 c3 c4 c5 push =}
 
 se aplicarán todas las implementaciones disponibles y se generarán los archivos \verb="pics/lena_asm_roberts.bmp", "pics/lena_asm_prewitt.bmp"=, etc... Además el programa mostrará por salida estándar la cantidad aproximada de clocks de procesador insumida por cada implementación.
 

@@ -3,7 +3,7 @@ img_extIsRegExp=false
 img_extensions=.eps .jpg .jpeg .png .pdf .ps .fig .gif
 kileprversion=2
 kileversion=2.1
-lastDocument=disc.tex
+lastDocument=intro.tex
 masterDocument=
 name=informe_tp2
 pkg_extIsRegExp=false
@@ -26,9 +26,9 @@ order=-1
 
 [item:desarrollo.tex]
 archive=true
-column=175756624
-encoding=
-highlight=
+column=20
+encoding=UTF-8
+highlight=LaTeX
 line=0
 open=false
 order=-1
@@ -39,7 +39,7 @@ column=0
 encoding=UTF-8
 highlight=LaTeX
 line=78
-open=true
+open=false
 order=2
 
 [item:informe_tp2.kilepr]
@@ -56,8 +56,8 @@ archive=true
 column=0
 encoding=UTF-8
 highlight=LaTeX
-line=1
-open=true
+line=25
+open=false
 order=1
 
 [item:main.tex]
@@ -65,8 +65,8 @@ archive=true
 column=0
 encoding=UTF-8
 highlight=LaTeX
-line=155
-open=true
+line=23
+open=false
 order=0
 
 [item:manual.tex]
