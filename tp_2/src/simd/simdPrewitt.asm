@@ -1,4 +1,4 @@
-global asmPrewitt
+global simdPrewitt
 %define SRC [EBP+8]	;donde empieza la matriz de la imagen original
 %define DST [EBP+12]	;donde empieza la matriz de los datos a guardar
 %define WIDTH [EBP+16]	;el ancho de la imagen
@@ -7,7 +7,7 @@ global asmPrewitt
 section .text
 
 section .data
-asmPrewitt: 
+simdPrewitt: 
 	;hacemos los push basicos
 	push ebp
 	mov ebp, esp
