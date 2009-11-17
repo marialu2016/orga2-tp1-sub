@@ -58,9 +58,9 @@ global asmSobel
 	add eax, ebx
 %endmacro
 
+section .data
 section .text
 
-section .data
 asmSobel: 
 	;hacemos los push basicos
 	push ebp

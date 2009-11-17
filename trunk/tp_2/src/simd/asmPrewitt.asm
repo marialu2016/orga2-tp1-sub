@@ -54,9 +54,9 @@ global asmPrewitt
 	add eax, ebx
 %endmacro
 
-section .text
 
 section .data
+section .text
 asmPrewitt: 
 	;hacemos los push basicos
 	push ebp
