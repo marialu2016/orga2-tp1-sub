@@ -11,7 +11,7 @@ struct IplImage {
 /**
  * Reemplazar por otros operadores...
  */
-extern void simdRoberts(const char* src, char* dst, int ancho, int alto);
+extern void simdPrewitt(const char* src, char* dst, int ancho, int alto);
 
 
 /* Funciones de imagenes */
@@ -80,7 +80,7 @@ int main(int argc, char *argv[]){
     
     //asmPrewittSIMD(src->imageData, dst->imageData, src->width, src->height);
 
-    simdRoberts(src->imageData, dst->imageData, src->width, src->height);
+    simdPrewitt(src->imageData, dst->imageData, src->width, src->height);
     
     //cRoberts(src->imageData, dst->imageData, src->width, src->height, 1, 0);
 

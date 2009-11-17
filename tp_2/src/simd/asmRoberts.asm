@@ -40,9 +40,9 @@ global asmRoberts
 	cmovg eax,ebx	;si eax>255 entoces pone 255
 %endmacro
 
+section .data
 section .text
 
-section .data
 asmRoberts:
 	;hacemos los push basicos
 	push ebp
