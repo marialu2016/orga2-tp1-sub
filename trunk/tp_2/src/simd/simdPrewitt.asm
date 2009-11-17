@@ -4,9 +4,10 @@ global simdPrewitt
 %define WIDTH [EBP+16]	;el ancho de la imagen
 %define HEIGHT [EBP+20]	;el alto de la imagen
 
+section .data
+
 section .text
 
-section .data
 simdPrewitt: 
 	;hacemos los push basicos
 	push ebp

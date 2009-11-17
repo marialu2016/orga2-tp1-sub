@@ -10,10 +10,10 @@ global simdRoberts
 %define HEIGHT [EBP+20]	;el alto de la imagen
 %define WIDTHSTEP [EBP-4];variable local donde se almacena el WIDTHSTEP
 
+section .data
 
 section .text
 
-section .data
 	mask: dd 0xffff_ffff,0xffff_ffff,0xffff_ffff,0xfff_ff00
 
 simdRoberts:
