@@ -1,4 +1,4 @@
-global simdPrewitt
+global asmPrewitt
 %define SRC [EBP+8]	;donde empieza la matriz de la imagen original
 %define DST [EBP+12]	;donde empieza la matriz de los datos a guardar
 %define WIDTH [EBP+16]	;el ancho de la imagen
@@ -7,7 +7,7 @@ global simdPrewitt
 section .text
 
 section .data
-simdPrewitt: 
+asmPrewitt: 
 	;hacemos los push basicos
 	push ebp
 	mov ebp, esp
@@ -36,12 +36,16 @@ cicloF:
 		mascaraX:
 			;vamos a traer los datos para la mascaraX
 			sub esi, ebx
-			movdqu xmm5, [esi+edx-1]
+			movdqu xmm5, [esi+edx-1] ;fila de arriba
 			add esi, ebx
-			movdqu xmm6, [esi+edx-1]
+			movdqu xmm6, [esi+edx-1] ;fila actual
 			add esi, ebx
-			movdqu xmm7, [esi+edx-1]
+			movdqu xmm7, [esi+edx-1] ;fila de abajo
 			sub esi, ebx
+			;entoces en 	XMM5 tenemos 16 bytes de la fila de arriba (fila 1)
+			;	   	XMM6 tenemos 16 bytes de la fila central (fila 2)
+			;		XMM7 tenemos 16 bytes de la fila de abajo (fila 3)
+			;		esi quedo en la fila central
 			pxor xmm0, xmm0
 			punpcklbw xmm0, xmm5 ;xmm0=[a1.1,a1.2,..,a1.8]
 			pxor xmm1,xmm1
@@ -55,46 +59,49 @@ cicloF:
 			pxor xmm5, xmm5
 			punpckhbw xmm5, xmm7 ;xmm5=[a3.9,a3.10,..,a3.16]
 			pxor xmm6,xmm6
-			psubw xmm6, xmm0
-			psubw xmm6, xmm1
-			psubw xmm6, xmm2     ;restada la primer columna
-			;aca ya quedan libres xmm0,1,2 MASO
+			psubw xmm6, xmm0 ;xmm6 = -xmm0
+			psubw xmm6, xmm1 ;xmm6 = -xmm0-xmm1
+			psubw xmm6, xmm2 ;xmm6 = -xmm0-xmm1-xmm2
+
+			;ahora voy por la suma de las otras partes
 			movdqu xmm7, xmm0
-			psrldq xmm7, 2*2
-			movdqu xmm0, xmm3
-			pslldq xmm0, 2*6
-			psrldq xmm0, 2*6
-			paddw xmm7, xmm0
-			paddw xmm6, xmm7
+			psrldq xmm7, 2*2  ;xmm7 = xmm0>>4B=[a1.3,..,a1.8,0,0]
+			movdqu xmm0, xmm3 ;xmm0 = xmm3
+			pslldq xmm0, 2*6 
+			psrldq xmm0, 2*6  ;xmm0 = [a1.9,a.10,0,..,0]
+			paddw xmm7, xmm0  ;xmm7 = [a1.3,..,a.10] = suma1
+			paddw xmm6, xmm7  ;xmm6 = -xmm0-xmm1-xmm2+suma1
 
 			movdqu xmm7, xmm1
-			psrldq xmm7, 2*2
-			movdqu xmm0, xmm4
+			psrldq xmm7, 2*2  ;xmm7 = xmm1>>4B = [a2.3,..,a2.8,0,0]
+			movdqu xmm0, xmm4 ;xmm0 = xmm4
 			pslldq xmm0, 2*6
-			psrldq xmm0, 2*6
-			paddw xmm7, xmm0
-			paddw xmm6, xmm7
+			psrldq xmm0, 2*6  ;xmm0 = [a2.9,a2.10,0,..,0]
+			paddw xmm7, xmm0  ;xmm7 = [a2.3,..,a2.10] = suma2
+			paddw xmm6, xmm7  ;xmm6 = -xmm0-xmm1-xmm2+suma1+suma2
 
 			movdqu xmm7, xmm2
-			psrldq xmm7, 2*2
-			movdqu xmm0, xmm5
-			pslldq xmm0, 2*6
-			psrldq xmm0, 2*6
-			paddw xmm7, xmm0
-			paddw xmm6, xmm7     ;xmm6=[-a1.1-a2.1-a3.1+a1.3+a2.3+a3.3,...]
-			;listo mascaraX de los primeros 4 pixeles, ahora quedan libre xmm0,1,2
-			pxor xmm0, xmm0
-			psubw xmm0, xmm3
-			psubw xmm0, xmm4
-			psubw xmm0, xmm5
-			psrldq xmm3, 2*2
-			paddw xmm0, xmm3
-			psrldq xmm4, 2*2
-			paddw xmm0, xmm4
-			psrldq xmm5, 2*2
-			paddw xmm0, xmm5     ;xmm0 la segunda parte ya hehco
-			packuswb xmm6, xmm0  ;exn xmm6 esta todo hecho
-			;movdqu [edi+edx], xmm6
+			psrldq xmm7, 2*2  ;xmm7 = xmm2>>4B = [a3.3,..,a.8,0,0]
+			movdqu xmm0, xmm5 ;xmm0 = xmm5
+			pslldq xmm0, 2*6 
+			psrldq xmm0, 2*6  ;xmm0 = [a3.9,a3.10,0,..,0]
+			paddw xmm7, xmm0  ;xmm7 = [a3.3,..,a3.10] = suma3
+			paddw xmm6, xmm7  ;xmm6= -xmm0-xmm1-xmm2+suma1+suma2+suma3
+			;ahora hay que hacer el calculo de los proxomos 6 (con 8 datos)
+			pxor xmm0, xmm0  ;xmm0 = 0 aca se va a guardar estos datos
+			psubw xmm0, xmm3 ;xmm0 = -xmm3
+			psubw xmm0, xmm4 ;xmm0 = -xmm3-xmm4
+			psubw xmm0, xmm5 ;xmm0 = -xmm3-xmm4-xmm5
+			psrldq xmm3, 2*2 ;xmm3>>4B = [a1.11,..,a1,.16,0,0] = suma1
+			paddw xmm0, xmm3 ;xmm0 = -xmm3-xmm4-xmm5+suma1
+			psrldq xmm4, 2*2 ;xmm4>>4B = [a2.11,..,a2.16,0,0] = suma2
+			paddw xmm0, xmm4 ;xmm0 = -xmm3-xmm4-xmm5+suma1+suma2
+			psrldq xmm5, 2*2 ;xmm5>>4B = [a3.11,..,a3.16,0,0] = suma3
+			paddw xmm0, xmm5 ;xmm0 = -xmm3-xmm4-xmm4+suma1+suma2+suma3 = lo que queremos
+			packuswb xmm6, xmm0
+			;xmm6 = los primeros 14 bytes son los que nos improta, tiene todo los datos
+			;bien guardados (cuando ande) y los ultimos 2 los vamos apisar asi que no importa 
+			movdqu [edi+edx], xmm6
 
 		mascaraY:
 			sub esi, ebx
@@ -160,9 +167,9 @@ cicloF:
 			paddw xmm0, xmm3
 			packuswb xmm4, xmm0
 
-			movdqu xmm5, [edi+edx]
-			paddusb xmm4, xmm5
-			movdqu [edi+edx], xmm4
+			;movdqu xmm5, [edi+edx]
+			;paddusb xmm4, xmm5
+			;movdqu [edi+edx], xmm4
 
 
 		add edx, 14
