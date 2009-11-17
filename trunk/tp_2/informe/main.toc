@@ -1,8 +1,9 @@
 \select@language {spanish}
 \contentsline {section}{\numberline {1}Introducci\IeC {\'o}n}{2}{section.1}
-\contentsline {section}{\numberline {2}Desarrollo}{4}{section.2}
-\contentsline {subsection}{\numberline {2.1}Programa}{4}{subsection.2.1}
-\contentsline {subsection}{\numberline {2.2}Implementaci\IeC {\'o}n}{4}{subsection.2.2}
-\contentsline {section}{\numberline {3}Discusi\IeC {\'o}n}{5}{section.3}
-\contentsline {section}{\numberline {4}Conclusiones}{7}{section.4}
-\contentsline {section}{\numberline {5}Ap\IeC {\'e}ndice A: Manual de usuario}{8}{section.5}
+\contentsline {section}{\numberline {2}Desarrollo}{3}{section.2}
+\contentsline {subsection}{\numberline {2.1}Programa}{3}{subsection.2.1}
+\contentsline {subsection}{\numberline {2.2}Implementaci\IeC {\'o}n}{3}{subsection.2.2}
+\contentsline {subsubsection}{\numberline {2.2.1}Operador de Roberts}{5}{subsubsection.2.2.1}
+\contentsline {section}{\numberline {3}Discusi\IeC {\'o}n}{6}{section.3}
+\contentsline {section}{\numberline {4}Conclusiones}{8}{section.4}
+\contentsline {section}{\numberline {5}Ap\IeC {\'e}ndice A: Manual de usuario}{9}{section.5}

@@ -20,8 +20,45 @@ Utilizamos la biblioteca \textbf{OpenCV} para manejar las imágenes convenientem
 
 \subsection{Implementación}
 
+%%esto creo que es general, de última yo lo uso en roberts y lo pongo ahí sino.
+Respecto del procesamiento de datos en paralelo via-SIMD lo que se hizo fue procesar los pixeles de las imágenes de la siguiente forma. Por un lado sabemos que la imagen tiene un ancho múltiplo de 16 pixeles lo cual facilita el \emph{fetch} de los mismos a los registros \texttt{xmm}. Además tenemos en cuenta que la imagen es de 8 bits en escala de grises, es decir, cada pixel es un número de 1 byte que según la intensidad oscila en valores enteros entre 0 y 255. 
+
+Cada registro \texttt{xmm} tiene 128 bits de ancho, o lo que es igual, 16 bytes. Como el ancho de la imagen tiene las características mencionadas anteriormente, esto nos permite visualizar a la imagen en algo de $n$ columnas de 16 bytes de ancho, justamente el ancho de los registros y $n$ es un número entero cosa que nos permite en $n$ viajes a memoria cargar toda una fila en los registros y poder operar con ella convenientemente.
+
+Esto es muy interesante porque antes se hacían $k$ accesos a memoria (donde $k$ es el ancho en pixeles de la imagen). Ahora se traen en ráfaga $\frac{k}{16}$ pixeles (si la imagen está en escala de grises). Esto minimiza notablemente la penalización que se paga por acceder a la memoria RAM que como sabemos es mucho más lenta en términos de velocidad que los registros internos del procesador.
+
+Respecto de la forma de operar aritméticamente, surge un inconveniente si tenemos 16 pixeles (almacenados como bytes) cuando tenemos que hacer una resta por ejemplo, ya que podríamos estar perdiendo información al saturar. Por ejemplo:
+
+\begin{center}
+\begin{minipage}{0.30 \textwidth}
+$\begin{pmatrix}
+a_{11} & a_{12} \\
+a_{21} & a_{22}  \\
+\end{pmatrix}$
+\end{minipage}
+\ \ 
+ \begin{minipage}{0.30 \textwidth}
+$\begin{pmatrix}
+15 & 255 \\
+1 & -255 \\
+\end{pmatrix}$
+\end{minipage}
+\end{center}
+
+En este caso si la convolución se hace al $a_{11}$ con la matriz de Roberts quedaría: $a_{11} = a_{22} - a_{21}$ que en nuesto caso se resume a....
+
+Entonces para que en las restas de números no se pierda información en el medio lo que se hace es lo siguiente: traemos los bytes pero luego los desempaquetamos como \emph{words} de forma tal de no perder precisión con las restas. Luego los empaquetamos saturados para grabarlos en la imagen destino convenientemente. Gráficamente sería algo como: 
+
+\includegraphics[scale=0.55]{/home/connor/Escritorio/fetch.pdf}
+
+\subsubsection{Operador de Roberts}
 
 
+
+%borradorrr!
+lalala 
+
+\includegraphics[scale=0.60]{/home/connor/Escritorio/dibujo.pdf}
 
 %%%%%% informe anterior
 % La imagen de entrada puede tener cualquier formato que la función \texttt{cvLoadImage} de \emph{OpenCV} soporte; todos los formatos comunes están incluidos. Por cada operador utilizado se guarda una nueva imagen en escala de grises (con un sufijo en el nombre que indica el operador y la misma extensión y tamaño que la imagen de entrada) que grafica los bordes detectados.
