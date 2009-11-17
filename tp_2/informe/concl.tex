@@ -1,5 +1,18 @@
 \section{Conclusiones}
 
+Con la realización del presente trabajo pudimos apreciar la mejora que se tiene al implementar un algoritmo con instrucciones del tipo SIMD.
+
+De acuerdo a la experimentación realizada, pudimos observar que en promedio la mejora de utilizar SIMD es de alrededor de un XXXXX \% en promedio para las implementaciones de los operadores de Roberts, Prewitt y Sobel.
+
+Si bien los resultados obtenidos son óptimos es evidente la limitación que en principio tienen estas instrucciones ya que como se dijo en la introducción, no todos los algoritmos son paralelizables y tratables bajo el concepto de la filosofía SIMD.
+
+A pesar de los beneficios de este tipo de instrucciones, el grupo encontró particular dificultad a la hora de \emph{debuggear} el programa ya que por un lado, no logramos que el compilador genere los símbolos de \emph{debugging} correctamente a pesar de estar configurado para esto y además,la programación con MMX y SSE hace el trabajo un poco más dificil ya que en general no se acostumbra a pensar en paralelo cuando uno programa con lenguajes de nivel más alto. Vale mencionar también que el código se vuelve un poco más críptico cuando se emplean este tipo de técnicas.
+
+Creemos que es fundamental ahondar en este tipo de técnicas de programación en paralelo ya que si bien su uso en principio puede estar restringido a un conjunto bastante acotado de problemas, estamos convencidos que es positivo hacer hincapie en este tema ya que la manera de pensar este tipo de problemas es distinta a lo habitual y consecuentemente, es un recurso nuevo y que puede ser muy útil para encarar diversos problemas.
+
+%%%%
+
+
 Como discutimos anteriormente, verificamos el hecho esperado de que nuestras implementaciones no alcanzarían la rapidez de las de OpenCV.
 
 También es nuy notorio cómo se puede llegar a mejorar la performance de un algoritmo implementándolo a tan bajo nivel. Para imágenes de tamaños típicos la ejecución realmente parece instantánea.
