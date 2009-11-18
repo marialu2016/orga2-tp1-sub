@@ -47,18 +47,21 @@ cicloF:
 			;	   	XMM6 tenemos 16 bytes de la fila central (fila 2)
 			;		XMM7 tenemos 16 bytes de la fila de abajo (fila 3)
 			;		esi quedo en la fila central
-			pxor xmm0, xmm0
-			punpcklbw xmm0, xmm5 ;xmm0=[a1.1,a1.2,..,a1.8]
-			pxor xmm1,xmm1
-			punpcklbw xmm1, xmm6 ;xmm1=[a2.1,a2.2,..,a2.8]
-			pxor xmm2, xmm2
-			punpcklbw xmm2, xmm7 ;xmm2=[a3.1,a3.2,..,a3.8]
-			pxor xmm3, xmm3
-			punpckhbw xmm3, xmm5 ;xmm3=[a1.9,a1.10,..,a1.16]
 			pxor xmm4, xmm4
-			punpckhbw xmm4, xmm6 ;xmm4=[a2.9,a2.10,..,a2.16]
+			movdqu xmm0,xmm5
+			punpcklbw xmm0, xmm4 ;xmm0=[a1.1,a1.2,..,a1.8]
+			movdqu xmm1,xmm6
+			punpcklbw xmm1, xmm4 ;xmm1=[a2.1,a2.2,..,a2.8]
+			movdqu xmm2,xmm7
+			punpcklbw xmm2, xmm4 ;xmm2=[a3.1,a3.2,..,a3.8]
+			movdqu xmm3,xmm5
+			punpckhbw xmm3, xmm4 ;xmm3=[a1.9,a1.10,..,a1.16]
+			movdqu xmm4,xmm6
 			pxor xmm5, xmm5
-			punpckhbw xmm5, xmm7 ;xmm5=[a3.9,a3.10,..,a3.16]
+			punpckhbw xmm4, xmm5 ;xmm4=[a2.9,a2.10,..,a2.16]
+			movdqu xmm5,xmm7
+			pxor xmm6, xmm6
+			punpckhbw xmm5, xmm6 ;xmm5=[a3.9,a3.10,..,a3.16]
 			pxor xmm6,xmm6
 			psubw xmm6, xmm0 ;xmm6 = -xmm0
 			psubw xmm6, xmm1 ;xmm6 = -xmm0-xmm1
@@ -68,26 +71,24 @@ cicloF:
 			movdqu xmm7, xmm0
 			psrldq xmm7, 2*2  ;xmm7 = xmm0>>4B=[a1.3,..,a1.8,0,0]
 			movdqu xmm0, xmm3 ;xmm0 = xmm3
-			pslldq xmm0, 2*6 
-			psrldq xmm0, 2*6  ;xmm0 = [a1.9,a.10,0,..,0]
+			pslldq xmm0, 2*6  ;xmm0 = [0,..,a1.9,a1.10]
 			paddw xmm7, xmm0  ;xmm7 = [a1.3,..,a.10] = suma1
 			paddw xmm6, xmm7  ;xmm6 = -xmm0-xmm1-xmm2+suma1
 
 			movdqu xmm7, xmm1
 			psrldq xmm7, 2*2  ;xmm7 = xmm1>>4B = [a2.3,..,a2.8,0,0]
 			movdqu xmm0, xmm4 ;xmm0 = xmm4
-			pslldq xmm0, 2*6
-			psrldq xmm0, 2*6  ;xmm0 = [a2.9,a2.10,0,..,0]
+			pslldq xmm0, 2*6  ;xmm0 = [0,..,0,a2.9,a2.10]
 			paddw xmm7, xmm0  ;xmm7 = [a2.3,..,a2.10] = suma2
 			paddw xmm6, xmm7  ;xmm6 = -xmm0-xmm1-xmm2+suma1+suma2
 
 			movdqu xmm7, xmm2
 			psrldq xmm7, 2*2  ;xmm7 = xmm2>>4B = [a3.3,..,a.8,0,0]
 			movdqu xmm0, xmm5 ;xmm0 = xmm5
-			pslldq xmm0, 2*6 
-			psrldq xmm0, 2*6  ;xmm0 = [a3.9,a3.10,0,..,0]
+			pslldq xmm0, 2*6  ;xmm0 = [0,..,0,a3.9,a3.10]
 			paddw xmm7, xmm0  ;xmm7 = [a3.3,..,a3.10] = suma3
 			paddw xmm6, xmm7  ;xmm6= -xmm0-xmm1-xmm2+suma1+suma2+suma3
+			
 			;ahora hay que hacer el calculo de los proxomos 6 (con 8 datos)
 			pxor xmm0, xmm0  ;xmm0 = 0 aca se va a guardar estos datos
 			psubw xmm0, xmm3 ;xmm0 = -xmm3
@@ -102,7 +103,7 @@ cicloF:
 			packuswb xmm6, xmm0
 			;xmm6 = los primeros 14 bytes son los que nos improta, tiene todo los datos
 			;bien guardados (cuando ande) y los ultimos 2 los vamos apisar asi que no importa 
-			movdqu [edi+edx], xmm6
+			;movdqu [edi+edx], xmm6
 
 		mascaraY:
 			sub esi, ebx
@@ -111,14 +112,15 @@ cicloF:
 			add esi, ebx
 			movdqu xmm7, [esi+edx-1] ;linea de abajo
 			sub esi, ebx
-			pxor xmm0, xmm0
-			punpcklbw xmm0, xmm6 ;xmm0=[a1.1,a1.2,..,a1.8]
-			pxor xmm1,xmm1
-			punpcklbw xmm1, xmm7 ;xmm2=[a3.1,a3.2,..,a3.8]
-			pxor xmm2, xmm2
-			punpckhbw xmm2, xmm6 ;xmm3=[a1.9,a1.10,..,a1.16]
-			pxor xmm3, xmm3
-			punpckhbw xmm3, xmm7 ;xmm5=[a3.9,a3.10,..,a3.16]
+			movdqu xmm0, xmm6
+			pxor xmm5, xmm5
+			punpcklbw xmm0, xmm5 ;xmm0=[a1.1,a1.2,..,a1.8]
+			movdqu xmm1, xmm7
+			punpcklbw xmm1, xmm5 ;xmm2=[a3.1,a3.2,..,a3.8]
+			movdqu xmm2, xmm6
+			punpckhbw xmm2, xmm5 ;xmm3=[a1.9,a1.10,..,a1.16]
+			movdqu xmm3, xmm7
+			punpckhbw xmm3, xmm5 ;xmm5=[a3.9,a3.10,..,a3.16]
 			;ahora empeiza 
 			movdqu xmm4, xmm1
 			psubw xmm4, xmm0
@@ -127,7 +129,6 @@ cicloF:
 			psrldq xmm5, 2
 			movdqu xmm6, xmm2
 			pslldq xmm6, 7*2
-			psrldq xmm6, 7*2
 			paddw xmm5, xmm6
 			psubw xmm4, xmm5
 
@@ -135,7 +136,6 @@ cicloF:
 			psrldq xmm5, 4
 			movdqu xmm6, xmm2
 			pslldq xmm6, 6*2
-			psrldq xmm6, 7*2
 			paddw xmm5, xmm6
 			psubw xmm4, xmm5
 
@@ -143,7 +143,6 @@ cicloF:
 			psrldq xmm5, 2
 			movdqu xmm6, xmm3
 			pslldq xmm6, 7*2
-			psrldq xmm6, 7*2
 			paddw xmm5, xmm6
 			paddw xmm4, xmm5
 
@@ -151,10 +150,9 @@ cicloF:
 			psrldq xmm5, 2
 			movdqu xmm6, xmm3
 			pslldq xmm6, 6*2
-			psrldq xmm6, 7*2
 			paddw xmm5, xmm6
 			paddw xmm4, xmm5
-			;queda libre el resto menos 2 y 3
+
 			pxor xmm0, xmm0
 			psubw xmm0, xmm2
 			paddw xmm0, xmm3
@@ -170,7 +168,7 @@ cicloF:
 
 			;movdqu xmm5, [edi+edx]
 			;paddusb xmm4, xmm5
-			;movdqu [edi+edx], xmm4
+			movdqu [edi+edx], xmm4
 
 
 		add edx, 14
