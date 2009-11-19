@@ -3,7 +3,11 @@
 \contentsline {section}{\numberline {2}Desarrollo}{3}{section.2}
 \contentsline {subsection}{\numberline {2.1}Programa}{3}{subsection.2.1}
 \contentsline {subsection}{\numberline {2.2}Implementaci\IeC {\'o}n}{3}{subsection.2.2}
-\contentsline {subsubsection}{\numberline {2.2.1}Operador de Roberts}{5}{subsubsection.2.2.1}
-\contentsline {section}{\numberline {3}Discusi\IeC {\'o}n}{6}{section.3}
-\contentsline {section}{\numberline {4}Conclusiones}{8}{section.4}
-\contentsline {section}{\numberline {5}Ap\IeC {\'e}ndice A: Manual de usuario}{9}{section.5}
+\contentsline {subsubsection}{\numberline {2.2.1}Precisi\IeC {\'o}n num\IeC {\'e}rica}{3}{subsubsection.2.2.1}
+\contentsline {subsubsection}{\numberline {2.2.2}Operador de Roberts}{5}{subsubsection.2.2.2}
+\contentsline {subsubsection}{\numberline {2.2.3}Operador de Prewitt}{6}{subsubsection.2.2.3}
+\contentsline {subsubsection}{\numberline {2.2.4}Operador de Sobel}{6}{subsubsection.2.2.4}
+\contentsline {subsubsection}{\numberline {2.2.5}Operador de Frei-Chen}{6}{subsubsection.2.2.5}
+\contentsline {section}{\numberline {3}Discusi\IeC {\'o}n}{7}{section.3}
+\contentsline {section}{\numberline {4}Conclusiones}{9}{section.4}
+\contentsline {section}{\numberline {5}Ap\IeC {\'e}ndice A: Manual de usuario}{10}{section.5}

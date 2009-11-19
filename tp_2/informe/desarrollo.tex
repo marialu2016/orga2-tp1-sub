@@ -20,12 +20,16 @@ Utilizamos la biblioteca \textbf{OpenCV} para manejar las imágenes convenientem
 
 \subsection{Implementación}
 
-%%esto creo que es general, de última yo lo uso en roberts y lo pongo ahí sino.
-Respecto del procesamiento de datos en paralelo via-SIMD lo que se hizo fue procesar los pixeles de las imágenes de la siguiente forma. Por un lado sabemos que la imagen tiene un ancho múltiplo de 16 pixeles lo cual facilita el \emph{fetch} de los mismos a los registros \texttt{xmm}. Además tenemos en cuenta que la imagen es de 8 bits en escala de grises, es decir, cada pixel es un número de 1 byte que según la intensidad oscila en valores enteros entre 0 y 255. 
+%esto serían observaciones generales
+% Respecto del procesamiento de datos en paralelo via-SIMD lo que se hizo fue procesar los pixeles de las imágenes de la siguiente forma. Por un lado sabemos que la imagen tiene un ancho múltiplo de 16 pixeles lo cual facilita el \emph{fetch} de los mismos a los registros \texttt{xmm}. Además tenemos en cuenta que la imagen es de 8 bits en escala de grises, es decir, cada pixel es un número de 1 byte que según la intensidad oscila en valores enteros entre 0 y 255. 
+% 
+% Cada registro \texttt{xmm} tiene 128 bits de ancho, o lo que es igual, 16 bytes. Como el ancho de la imagen tiene las características mencionadas anteriormente, esto nos permite visualizar a la imagen en algo de $n$ columnas de 16 bytes de ancho, justamente el ancho de los registros y $n$ es un número entero cosa que nos permite en $n$ viajes a memoria cargar toda una fila en los registros y poder operar con ella convenientemente.
+% 
+% Esto es muy interesante porque antes se hacían $k$ accesos a memoria (donde $k$ es el ancho en pixeles de la imagen). Ahora se traen en ráfaga $\frac{k}{16}$ pixeles (si la imagen está en escala de grises). Esto minimiza notablemente la penalización que se paga por acceder a la memoria RAM que como sabemos es mucho más lenta en términos de velocidad que los registros internos del procesador.
+% 
+% Estas observaciones valen en caso que la operatoria se haga con valores enteros. Para el caso de Frei-Chen que tiene un $\sqrt{2}$ en la matriz esto deja de ser cierto ya que en ese caso, se opera directamente con números reales representados con precisión simple de 32-bits.
 
-Cada registro \texttt{xmm} tiene 128 bits de ancho, o lo que es igual, 16 bytes. Como el ancho de la imagen tiene las características mencionadas anteriormente, esto nos permite visualizar a la imagen en algo de $n$ columnas de 16 bytes de ancho, justamente el ancho de los registros y $n$ es un número entero cosa que nos permite en $n$ viajes a memoria cargar toda una fila en los registros y poder operar con ella convenientemente.
-
-Esto es muy interesante porque antes se hacían $k$ accesos a memoria (donde $k$ es el ancho en pixeles de la imagen). Ahora se traen en ráfaga $\frac{k}{16}$ pixeles (si la imagen está en escala de grises). Esto minimiza notablemente la penalización que se paga por acceder a la memoria RAM que como sabemos es mucho más lenta en términos de velocidad que los registros internos del procesador.
+\subsubsection{Precisión numérica} %%esto creo que es general, de última yo lo uso en roberts y lo pongo ahí sino.
 
 Respecto de la forma de operar aritméticamente, surge un inconveniente si tenemos 16 pixeles (almacenados como bytes) cuando tenemos que hacer una resta por ejemplo, ya que podríamos estar perdiendo información al saturar. Por ejemplo:
 
@@ -45,84 +49,131 @@ $\begin{pmatrix}
 \end{minipage}
 \end{center}
 
-En este caso si la convolución se hace al $a_{11}$ con la matriz de Roberts quedaría: $a_{11} = a_{22} - a_{21}$ que en nuesto caso se resume a....
+En este caso si la convolución se hace al $a_{11}$ con la matriz de Roberts quedaría: $a_{11} = a_{22} - a_{21}$ que en nuesto caso se resume a...
 
-Entonces para que en las restas de números no se pierda información en el medio lo que se hace es lo siguiente: traemos los bytes pero luego los desempaquetamos como \emph{words} de forma tal de no perder precisión con las restas. Luego los empaquetamos saturados para grabarlos en la imagen destino convenientemente. Gráficamente sería algo como: 
+Entonces para que en las restas de números no se pierda información en el medio lo que se hace es lo siguiente: traemos los bytes pero luego los desempaquetamos como \emph{words} de forma tal de no perder información con las restas. Luego los empaquetamos saturados para grabarlos en la imagen destino convenientemente. 
+
+\pagebreak
+Gráficamente sería algo como: 
 
 \includegraphics[scale=0.55]{/home/connor/Escritorio/fetch.pdf}
 
+Sin embargo, estas observaciones valen en caso que la operatoria se haga con valores enteros. Para el caso de Frei-Chen que tiene un $\sqrt{2}$ en la matriz esto deja de ser cierto ya que en ese caso, se opera directamente con números reales representados con precisión simple de 32-bits.
+
 \subsubsection{Operador de Roberts}
 
-
-
-%borradorrr!
-lalala 
-
-\includegraphics[scale=0.60]{/home/connor/Escritorio/dibujo.pdf}
-
-%%%%%% informe anterior
-% La imagen de entrada puede tener cualquier formato que la función \texttt{cvLoadImage} de \emph{OpenCV} soporte; todos los formatos comunes están incluidos. Por cada operador utilizado se guarda una nueva imagen en escala de grises (con un sufijo en el nombre que indica el operador y la misma extensión y tamaño que la imagen de entrada) que grafica los bordes detectados.
-% 
-% Por último, el programa muestra por salida estándar la cantidad aproximada de clocks de procesador utilizados para la ejecución del algoritmo.
-% 
-% Las implementaciones están hechas en lenguaje ensamblador, aunque el programa también permite usar la implementación del operador Sobel de la biblioteca \emph{OpenCV} (función \texttt{cvSobel}), así como también grabar la versión en escala de grises de la imagen de entrada. Por último, permite también aplicar una primera implementación del operador de Sobel que hicimos en C. Esta implementación fue realizada para ayudarnos a desarrollar el algoritmo.
-% 
-% El algoritmo consiste en aplicar la matriz correspondiente en X, saturar el valor a 0 y 255, luego aplicar la matriz en Y, saturar también su resultado, y finalmente sumar ambos valores y saturar la suma. Ese valor es el que se graba en la imagen generada.
-% 
-% También usamos \emph{OpenCV} para cargar y guardar imágenes y para pasarlas a escala de grises.
-%%%%%%%
+El operador de Roberts presenta las siguientes matrices de convolución para $x$ e $y$ respectivamente.
 
 
 
-%%%%%%%% Comenté el informe anterior por si era necesario reutilizar cosas como hice con la intro - JM.
+\begin{center}
+\begin{minipage}{0.30 \textwidth}
+$\begin{pmatrix}
+1 & 0 \\
+0 & -1  \\
+\end{pmatrix}$
+\end{minipage}
+\ \ 
+ \begin{minipage}{0.30 \textwidth}
+$\begin{pmatrix}
+0 & 1 \\
+-1 & 0 \\
+\end{pmatrix}$
+\end{minipage}
+\end{center}
+
+Dada la precondición que dice que el ancho de las imágenes es múltiplo de 16 bytes y que cada pixel está representado con 1 byte, entonces, podemos visualizar a la imagen de forma tal que esta tiene $n$ columnas de 16 bytes de ancho. Además al usar los registros \texttt{xmm} de 16 bytes de tamaño, podemos efectivamente para una fila de tamaño $k$ pixeles hacer nada más que $\frac{k}{16}$ accesos a memoria para traer toda la fila en cuestión cuando antes no quedaba otra opción que traer todos los pixeles de uno en uno. 
+
+El algoritmo que se encarga de realizar el operador de Roberts está dividido en dos partes independientemente de la dirección en la que se está pasando el operador. 
+
+En primer lugar, como el ancho de la imagen es múltiplo de 16 bytes, se optó por dividir dicho ancho en múltiplos de 16 bytes, que como se mencionó antes es el tamaño de los registros \texttt{xmm}. Entonces se tienen por lo menos $n$ columnas de 16 bytes de ancho y se procede trabajar con las $n-1$ primeras de la siguiente forma: 
+\begin{itemize}
+\item Máscara X: Se cargan los 16 bytes de la fila actual en un registro y luego se cargan los 16 bytes de la fila siguiente pero desplazados uno. Es decir, si la fila actual es $x$ y la siguiente es $x'$ entonces se carga en un registro el $x_i, x_{i+1}, x_{i+2}, ... , x_{i+15}$ y en el otro $x'_{i+1}, x'_{i+2}, x'_{i+3}, ... , x'_{i+16}$ donde $i$ es el número de la columna de la imagen. 
+\item Máscara Y: Este caso es análogo al anterior solo que el desplazamiento se hace en la fila actual, osea, se carga el $x_{i+1}, ..., x_{i+16}$ en un registro y en el siguiente el $x'_i, ... x'_{i+15}$
+\end{itemize}
+
+En ambos casos la idea del algoritmo es mantener las cosas lo más simple posible, de forma tal de que en este punto lo único que se hace es restar cada uno de los 16 bytes (que están separados en grupos de 8 words) y luego reempaquetarlos y dejarlos en la imagen destino. 
+
+Luego se procesa la última columna de la siguiente manera:
+\begin{itemize}
+\item Mascara X: Se carga la fila actual y la siguiente sin desplazamiento pero a la fila siguiente se la \emph{shiftea} a izquierda un byte de forma tal de tener en un registro $x_i, x_{i+1}, x_{i+2}, ... , x_{i+15}$ para la fila actual y en otro para la siguiente: $x'_{i+1}, x'_{i+2}, x'_{i+3}, ..., x'_{i+15}, 0$. De esta manera logramos cargar la fila como corresponde (sin pasarnos del límite que tenemos que tener) y operarla correctamente luego de desplazarla dentro del registro. 
+\item Máscara Y: Este caso es prácticamente igual al anterior. Se cargan sin desplazamiento tanto la fila actual como la siguiente. Luego se desplaza dentro del registro la fila actual con un \emph{shift} y se pone un 0 en la última columna de la fila siguiente de forma tal de dejar el borde en 0 mediante una máscara de bits dado que ese último pixel no es procesable.
+\end{itemize}
+
+En ambos casos se realizan las operaciones aritméticas pertinentes y luego se guarda el resultado donde corresponde. 
+
+El volcado de datos a memoria se realiza solamente cuando ambas máscaras han sido pasadas. Antes se utiliza un registro \texttt{xmm} como acumulador para evitar un acceso que sería innecesario.
 
 
-% \subsection{Algoritmos}
-% 
-% Si bien la detección de bordes requiere cálculos sencillos e intuitivos, hubo varios aspectos en los que surgieron dudas y posibilidades.
-% 
-% En un píxel en donde la intensidad de la imagen crece hacia la derecha, diremos que se trata de un borde "hacia la derecha". Si en ese punto la imagen en cambio oscurece hacia la derecha, diremos que es un borde "hacia la izquierda".
-% 
-% Notar que, en el caso de Prewitt o Sobel, la matriz de convolución en X (que detecta bordes verticales) arroja un resultado positivo en los bordes hacia la derecha y negativo en los bordes hacia la izquierda. Asimismo la matriz de convolución en Y (que detecta bordes horizontales) produce números positivos en bordes hacia abajo y negativos en bordes hacia arriba. Con las matrices de Roberts pasa lo mismo, salvo que los bordes son positivos hacia el noroeste para la matriz X o hacia el noreste para la Y, y negativos hacia el sudeste o sudoeste respectivamente.
-% 
-% 
-% Hay muchas formas de tratar los valores númerico de la derivación en X y en Y de cada píxel para graficarlos. Con la implementación que hicimos en C de Sobel probamos varias de ellas. Llamemos \emph{dx} y \emph{dy} a los valores obtenidos aplicando derivación en X y en Y respectivamente.
-% 
-% Una opción es graficar un punto cuya intensidad refleje el módulo del vector $(dx, dy)$. De esta manera se obtiene una imagen oscura con los puntos borde más claros. La imagen muestra los bordes en todas las direcciones, aunque no permite distinguir en qué sentido van. Es decir, un borde hacia la derecha se grafica igual que uno hacia la izquierda. Para el cálculo del módulo puede usarse la norma 2 o bien la norma 1, bastante más rápida de computar.
-% 
-% Otra transformación típica es saturar los valores a un mínimo y a un máximo, lo que permite visualizar los bordes a grandes rasgos sin importar todos los matices de variación. Por ejemplo se los puede saturar a 0 y a 255. Hay que notar que haciendo esto se desprecian todos los bordes negativos, por lo tanto sólo se grafican los bordes que van en un sentido. Si en cambio se suma 128 al valor antes de saturarlo, se puede generar una imagen en la que predomina el gris y donde los bordes positivos se muestran como zonas claras y los bordes negativos como zonas oscuras.
-% 
-% \smallskip
-% Las variantes que implementamos nosotros son las siguientes:
-% \begin{enumerate}
-%   \item $\rVert (dx + dy ) \rVert_1$ %norma 1 de (dx, dy) saturada a 255
-%   \item $dx + dy + 128$ saturado a 0 y a 255
-%   \item saturación de $dx$ y $dy$ a 0 y 255, suma, y saturación de la suma a 255
-% \end{enumerate}
-% \smallskip
-% 
-% La idea inicial que teníamos, sugerida en la consigna del trabajo, era implementar la primera variante, que grafica bordes en todas las direcciones. Finalmente, sin embargo, decidimos usar la tercera variante porque sus resultados coinciden con los arrojados por la implementación de Sobel de OpenCV, contra la cual deseábamos comparar performance. Esto quiere decir que las imágenes generadas por nuestro programa son oscuras, con zonas claras donde la imagen original tiene aumentos de intensidad hacia abajo o hacia la derecha (hacia el noroeste o hacia el noreste en el caso de Roberts). Los bordes que van en otras direcciones no se visualizan; así que es imposible saber dónde están o cuán abruptos son.
-% 
-% La variante 2 produce gráficos diferentes e interesantes de observar. Se pueden ver bordes en ambos sentidos, graficados de manera distinta. Los bordes positivos se muestran en blanco y los negativos en negro, sobre el fondo gris. Sin embargo no muestra bordes en todas las direcciones. De hecho, el efecto de sumar la derivada en X con la de Y es que los bordes se grafican en una única dirección (una diagonal). En los bordes perpendiculares a esta diagonal dx se anula con dy y por lo tanto estos bordes no se visualizan.
-% 
-% En el momento que optamos sumar las derivadas en X y en Y porque esa parecía ser la técnica usada por OpenCV, surgió una idea: en lugar de aplicar la matriz de X, luego la de Y y sumar los resultados, sería más eficiente (y más sencillo de implementar) hacer una sola pasada usando la matriz suma de las dos matrices.
-% 
-% Sin embargo las imágenes generadas haciendo ese "truco" no se parecían todavía a las de OpenCV. Algunos bordes, pese a ser "positivos", quedaban ocultos. Lo que sucedía era que, usando la matriz suma, por ejemplo una derivada positiva en X se puede anular con una derivada negativa en Y. Esto hace que se vean casi exclusivamente los bordes que apuntan en dirección sudeste (o norte para Roberts).
-% 
-% Finalmente se concluyó que la técnica correcta (para generar dibujos como los de OpenCV) era saturar cada derivada parcial a 0 y a 255 y recién después sumarlas. Como la primera saturación elimina negativos, es imposible que las derivadas se cancelen, y se terminan visualizando todos bordes cuya dirección tiene alguna componente hacia abajo o hacia la derecha.
-% 
-% 
-% \subsection{Implementación}
-% 
-% 
-% Cuando hicimos la primera implementación (la del operador de Sobel hecha en C) nos topamos con un primer problema: la imagen resultante parecía mostrar los bordes, sin embargo estaba llena de puntos blancos, como si el algoritmo saturara ante el borde más suave. Finalmente resultó que el problema se solucionaba haciendo \emph{casts} explícitos de los \texttt{char} obtenidos de las imágenes de OpenCV a \texttt{unsigned char}.
-% 
-% 
-% Dado que la correcta interpretación de las imágenes de OpenCV se realiza tratando los elementos del array \texttt{imageData} como \texttt{unsigned char}, todavía nos preguntamos por qué este campo del struct está declarado como \texttt{char*} (y no como \texttt{unsigned char*}).
-% 
-% 
-% Una vez que tuvimos la primera versión correcta hecha en lenguaje ensamblador (que aplicaba derivación en X mediante el operador de Sobel) nos tuvimos que embarcar en la tarea de mejorar el código. Si bien funcionaba correctamente abusaba de los accesos a memoria ya que para cada píxel estudiado salvaba y recuperaba información usando la pila (instrucciones \texttt{push} y \texttt{pop}). Esto provino del ``apuro'' por terminar la implementación; sin embargo muy pronto logramos que el algoritmo utilizara sólo los registros, con lo que se lograron mejoras importantes de performance.
-% 
-% La versión final del trabajo todavía permite ejecutar el programa con esta implementación provisoria de Sobel. Como es posible verificar ejecutando el programa, la implementación que usa la pila es menos eficiente (toma aproximadamente el doble de tiempo que la otra).
 
-%%%%%%%%%%%%%%%%%%%%%
+%acá se pueden poner imágenes... opcional igual. En caso negativo explico un poco mejor sino se entiende...
+
+%\includegraphics[scale=0.60]{/home/connor/Escritorio/dibujo.pdf}
+
+
+
+\subsubsection{Operador de Prewitt}
+
+Matrices de convolución para el operador de Prewitt en $x$ e $y$ respectivamente.
+
+\begin{center}
+\begin{minipage}{0.30 \textwidth}
+$\begin{pmatrix}
+-1 & 0 & 1 \\
+-1 & 0 & 1 \\
+-1 & 0 & 1 \\
+\end{pmatrix}$
+\end{minipage}
+\ \ 
+ \begin{minipage}{0.30 \textwidth}
+$\begin{pmatrix}
+-1 & -1 & -1 \\
+0 & 0 & 0  \\
+1 & 1 & 1 \\
+\end{pmatrix}$
+\end{minipage}
+\end{center}
+
+\subsubsection{Operador de Sobel}
+
+Matrices de Sobel en $x$ e $y$
+
+\begin{center}
+\begin{minipage}{0.30 \textwidth}
+$\begin{pmatrix}
+-1 & 0 & 1 \\
+-2 & 0 & 2 \\
+-1 & 0 & 1 \\
+\end{pmatrix}$
+\end{minipage}
+\ \ 
+ \begin{minipage}{0.30 \textwidth}
+$\begin{pmatrix}
+-1 & -2 & -1 \\
+0 & 0 & 0  \\
+1 & 2 & 1 \\
+\end{pmatrix}$
+\end{minipage}
+\end{center}
+
+\subsubsection{Operador de Frei-Chen}
+
+Frei-Chen en $x$ e $y$.
+
+\begin{center}
+\begin{minipage}{0.30 \textwidth}
+$\begin{pmatrix}
+-1 & 0 & 1 \\
+-\sqrt{2} & 0 & \sqrt{2} \\
+-1 & 0 & 1 \\
+\end{pmatrix}$
+\end{minipage}
+\ \ 
+ \begin{minipage}{0.30 \textwidth}
+$\begin{pmatrix}
+-1 & -\sqrt{2} & -1 \\
+0 & 0 & 0  \\
+1 & \sqrt{2} & 1 \\
+\end{pmatrix}$
+\end{minipage}
+\end{center}
