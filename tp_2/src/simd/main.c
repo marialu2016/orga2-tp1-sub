@@ -43,7 +43,11 @@ extern void asmSobel(const char* src, char* dst, int ancho, int alto, int xorder
 
 int cSobel(const char* src, char* dst, int ancho, int alto, int xorder, int yorder);
 
-int cFreichen(const char* src, char* dst, int width, int height, int xorder, int yorder);
+int cFreichen(const char* src, char* dst, int ancho, int alto, int xorder, int yorder);
+
+int cRoberts(const char* src, char* dst, int ancho, int alto, int xorder, int yorder);
+
+int cPrewitt(const char* src, char* dst, int ancho, int alto, int xorder, int yorder);
 
 
 /**************** Utilidades ********************/
@@ -77,13 +81,10 @@ void mostrarUso() {
     printf("              cv4  |   Sobel   |    Y      |      \"                  "); printf("\n");
     printf("              cv5  |   Sobel   |    XY     |      \"                  "); printf("\n");
     printf("                   |           |           |                          "); printf("\n");
-    printf("              c3   |   Sobel   |    X      |      C                   "); printf("\n");
-    printf("              c4   |   Sobel   |    Y      |      \"                  "); printf("\n");
-    printf("              c5   |   Sobel   |    XY     |      \"                  "); printf("\n");
-    printf("              c6   | Frei-chen |    XY     |      \"                  "); printf("\n");
+    printf("            c1...c6|   (idem)  |   (idem)  |      C                   "); printf("\n");
     printf("                   |           |           |                          "); printf("\n");
     printf("              byn  |   Escala de grises    |                          "); printf("\n");
-	printf("                   |           |           |                          "); printf("\n");
+    printf("                   |           |           |                          "); printf("\n");
     printf("     El programa generará una imagen por cada operador solicitado. El "); printf("\n");
     printf(" nombre de los archivos de salida será $dest más un guión bajo más el "); printf("\n");
     printf(" operador utilizado más la extensión (obtenida del archivo fuente).   "); printf("\n");
@@ -129,9 +130,12 @@ int main(int argc, char** argv) {
     const char* sobelCV_Y =       "cv4";
     const char* sobelCV_XY =      "cv5";
 
+    const char* robertsC_XY =     "c1";
+    const char* prewittC_XY =     "c2";
     const char* sobelC_X =        "c3";
     const char* sobelC_Y =        "c4";
     const char* sobelC_XY =       "c5";
+    const char* freichenC_XY =    "c6";
 
     const char* byn = "byn";
     
@@ -157,139 +161,151 @@ int main(int argc, char** argv) {
     
     // Por cada operador solicitado...
     for(op = 3; op < argc; op++) {
-    	
-		oper = argv[op];
-		usarSrc = 0;
-	    
-		printf("---- Operador '%s'                                \n", oper);
-	    
-		// Creo la imagen de OpenCV
-		dst = cvCreateImage(cvGetSize(src), IPL_DEPTH_8U, 1);
-		            
-		if(cmp(oper, robertsASM_XY)) {
-		    // Roberts XY
-		    __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
-		    asmRoberts(src->imageData, dst->imageData, src->width, src->height);
-		    __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
-		    
-		} else if(cmp(oper, prewittASM_XY)) {
-		    // Prewitt XY
-		    __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
-		    asmPrewitt(src->imageData, dst->imageData, src->width, src->height);
-		    __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
-		    
-		} else if(cmp(oper, sobelASM_X)) {
-		    // Sobel X
-		    __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
-		    asmSobel(src->imageData, dst->imageData, src->width, src->height, 1, 0);
-		    __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
-		
-		} else if(cmp(oper, sobelASM_Y)) {
-		    // Sobel Y
-		    __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
-		    asmSobel(src->imageData, dst->imageData, src->width, src->height, 0, 1);
-		    __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
-		
-		} else if(cmp(oper, sobelASM_XY)) {
-		    // Sobel XY
-		    __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
-		    asmSobel(src->imageData, dst->imageData, src->width, src->height, 1, 1);
-		    __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
-		       
-		} else if(cmp(oper, sobelCV_X)) {
-		    // Sobel X (OPenCV)
-		    __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
-		    cvSobel(src, dst, 1, 0, 3);
-		    __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
-		
-		} else if(cmp(oper, sobelCV_Y)) {
-		    // Sobel Y (OPenCV)
-		    __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
-		    cvSobel(src, dst, 0, 1, 3);
-		    __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
-		
-		} else if(cmp(oper, sobelCV_XY)) {
-		    // Sobel XY (OPenCV)
-		    __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
-		    cvSobel(src, dst, 1, 1, 3);
-		    __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
-		
-		} else if(cmp(oper, sobelC_X)) {
-		    // Sobel X (C)
-		    tscl = cSobel(src->imageData, dst->imageData, src->width, src->height, 1, 0);
-		
-		} else if(cmp(oper, sobelC_Y)) {
-		    // Sobel Y (C)
-		    tscl = cSobel(src->imageData, dst->imageData, src->width, src->height, 0, 1);
-		
-		} else if(cmp(oper, sobelC_XY)) {
-		    // Sobel XY (C)
-		    tscl = cSobel(src->imageData, dst->imageData, src->width, src->height, 1, 1);
-		
-		} else if(cmp(oper, byn)) {
-		    // Escala de grises (sin ninguna detección de bordes)
-		    tscl = 0;
-		    usarSrc = 1;
-		
-		} else if(cmp(oper, robertsSIMD_XY)) {
-		    // Roberts usando SIMD
-		    __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
-		    simdRoberts(src->imageData, dst->imageData, src->width, src->height);
-		    __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
+        
+        oper = argv[op];
+        usarSrc = 0;
+        
+        printf("---- Operador '%s'                                \n", oper);
+        
+        // Creo la imagen de OpenCV
+        dst = cvCreateImage(cvGetSize(src), IPL_DEPTH_8U, 1);
+                    
+        if(cmp(oper, robertsASM_XY)) {
+            // Roberts XY
+            __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
+            asmRoberts(src->imageData, dst->imageData, src->width, src->height);
+            __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
+            
+        } else if(cmp(oper, prewittASM_XY)) {
+            // Prewitt XY
+            __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
+            asmPrewitt(src->imageData, dst->imageData, src->width, src->height);
+            __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
+            
+        } else if(cmp(oper, sobelASM_X)) {
+            // Sobel X
+            __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
+            asmSobel(src->imageData, dst->imageData, src->width, src->height, 1, 0);
+            __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
+        
+        } else if(cmp(oper, sobelASM_Y)) {
+            // Sobel Y
+            __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
+            asmSobel(src->imageData, dst->imageData, src->width, src->height, 0, 1);
+            __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
+        
+        } else if(cmp(oper, sobelASM_XY)) {
+            // Sobel XY
+            __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
+            asmSobel(src->imageData, dst->imageData, src->width, src->height, 1, 1);
+            __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
+               
+        } else if(cmp(oper, sobelCV_X)) {
+            // Sobel X (OPenCV)
+            __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
+            cvSobel(src, dst, 1, 0, 3);
+            __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
+        
+        } else if(cmp(oper, sobelCV_Y)) {
+            // Sobel Y (OPenCV)
+            __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
+            cvSobel(src, dst, 0, 1, 3);
+            __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
+        
+        } else if(cmp(oper, sobelCV_XY)) {
+            // Sobel XY (OPenCV)
+            __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
+            cvSobel(src, dst, 1, 1, 3);
+            __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
+        
+        } else if(cmp(oper, robertsC_XY)) {
+            // Roberts XY (C)
+            tscl = cRoberts(src->imageData, dst->imageData, src->width, src->height, 1, 1);
+        
+        } else if(cmp(oper, prewittC_XY)) {
+            // Prewitt XY (C)
+            tscl = cPrewitt(src->imageData, dst->imageData, src->width, src->height, 1, 1);
+        
+        } else if(cmp(oper, sobelC_X)) {
+            // Sobel X (C)
+            tscl = cSobel(src->imageData, dst->imageData, src->width, src->height, 1, 0);
+        
+        } else if(cmp(oper, sobelC_Y)) {
+            // Sobel Y (C)
+            tscl = cSobel(src->imageData, dst->imageData, src->width, src->height, 0, 1);
+        
+        } else if(cmp(oper, sobelC_XY)) {
+            // Sobel XY (C)
+            tscl = cSobel(src->imageData, dst->imageData, src->width, src->height, 1, 1);
+            
+        } else if(cmp(oper, freichenC_XY)) {
+            // Frei-chen XY (C)
+            tscl = cFreichen(src->imageData, dst->imageData, src->width, src->height, 1, 1);
+        
+        } else if(cmp(oper, byn)) {
+            // Escala de grises (sin ninguna detección de bordes)
+            tscl = 0;
+            usarSrc = 1;
+        
+        } else if(cmp(oper, robertsSIMD_XY)) {
+            // Roberts usando SIMD
+            __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
+            simdRoberts(src->imageData, dst->imageData, src->width, src->height);
+            __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
 
-		} else if(cmp(oper, prewittSIMD_XY)) {
-		    // Prewitt usando SIMD
-		    __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
-		    simdPrewitt(src->imageData, dst->imageData, src->width, src->height);
-		    __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
+        } else if(cmp(oper, prewittSIMD_XY)) {
+            // Prewitt usando SIMD
+            __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
+            simdPrewitt(src->imageData, dst->imageData, src->width, src->height);
+            __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
 /*
-		} else if(cmp(oper, sobelSIMD_X)) {
-		    // Sobel usando SIMD solo en X
-		    __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
-		    simdSobel(src->imageData, dst->imageData, src->width, src->height, 1, 0);
-		    __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
+        } else if(cmp(oper, sobelSIMD_X)) {
+            // Sobel usando SIMD solo en X
+            __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
+            simdSobel(src->imageData, dst->imageData, src->width, src->height, 1, 0);
+            __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
 
-		} else if(cmp(oper, sobelSIMD_Y)) {
-		    // Sobel usando SIMD solo en Y
-		    __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
-		    simdSobel(src->imageData, dst->imageData, src->width, src->height, 0, 1);
-		    __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
+        } else if(cmp(oper, sobelSIMD_Y)) {
+            // Sobel usando SIMD solo en Y
+            __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
+            simdSobel(src->imageData, dst->imageData, src->width, src->height, 0, 1);
+            __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
 
-		} else if(cmp(oper, sobelSIMD_XY)) {
-		    // Sobel usando SIMD XY
-		    __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
-		    simdSobel(src->imageData, dst->imageData, src->width, src->height, 1, 1);
-		    __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
+        } else if(cmp(oper, sobelSIMD_XY)) {
+            // Sobel usando SIMD XY
+            __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
+            simdSobel(src->imageData, dst->imageData, src->width, src->height, 1, 1);
+            __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
 */
-		} else if(cmp(oper, freichenSIMD_XY)) {
-		    // Sobel usando SIMD solo en Y
-		    __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
-		    simdFreichen(src->imageData, dst->imageData, src->width, src->height);
-		    __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
+        } else if(cmp(oper, freichenSIMD_XY)) {
+            // Sobel usando SIMD solo en Y
+            __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
+            simdFreichen(src->imageData, dst->imageData, src->width, src->height);
+            __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
 
-		} else {
-		    printf("    ERROR: No se reconoce el operador '%s'\n", oper);
-		    continue;
-		}
-		    
-		// Cantidad de clocks insumidos por el algoritmo.
-		printf("    El procesamiento tomó %d clocks", tscl); printf("\n");
-		    
-		filename = malloc(strlen(dstName) + 1 + strlen(oper) + strlen(extension) + 1);
-		strcpy(filename, "");
-		strcat(filename, dstName);
-		strcat(filename, "_");
-		strcat(filename, oper);
-		strcat(filename, extension);
-		        
-		printf("    Guardando en '%s'...\n", filename);
-	    
-		// Guardar resultado
-		cvSaveImage(filename, usarSrc ? src : dst);
-		
-		printf("    OK\n");
-		
-		free(filename);
+        } else {
+            printf("    ERROR: No se reconoce el operador '%s'\n", oper);
+            continue;
+        }
+            
+        // Cantidad de clocks insumidos por el algoritmo.
+        printf("    El procesamiento tomó %d clocks", tscl); printf("\n");
+            
+        filename = malloc(strlen(dstName) + 1 + strlen(oper) + strlen(extension) + 1);
+        strcpy(filename, "");
+        strcat(filename, dstName);
+        strcat(filename, "_");
+        strcat(filename, oper);
+        strcat(filename, extension);
+                
+        printf("    Guardando en '%s'...\n", filename);
+        
+        // Guardar resultado
+        cvSaveImage(filename, usarSrc ? src : dst);
+        
+        printf("    OK\n");
+        
+        free(filename);
     }
     
     return 0;
@@ -297,5 +313,5 @@ int main(int argc, char** argv) {
 
 /** Devuelve true si los strings son iguales. */
 int cmp(const char* s1, const char* s2) {
-	return !strcmp(s1, s2);
+    return !strcmp(s1, s2);
 }

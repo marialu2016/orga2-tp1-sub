@@ -20,6 +20,32 @@ global simdFreichen
 %define XMM_ZERO xmm6
 %define XMM_SQR2 xmm7
 
+; Macro LOAD.
+;
+; Recibe dos registros xmm como parámetros y carga en ellos una fila de 8px de
+; la imagen fuente como SP floats, cuatro en cada uno.
+;
+%macro LOAD 2
+    
+    ; %1 = [ | | | | | | | |0|1|2|3|4|5|6|7] (enteros 8-bit sin signo)
+    movq %1, [esi + edx]
+    
+    ; %1 = [ 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 ] (enteros 16-bit con o sin signo)
+    punpcklbw %1, XMM_ZERO              
+    
+    movdqu %2, %1                       ; %2 = %1
+    
+    ; %1 = [   0   |   1   |   2   |   3   ] (enteros 32-bit con o sin signo)
+    punpcklwd %1, XMM_ZERO              
+    
+    ; %2 = [   4   |   5   |   6   |   7   ] (enteros 32-bit con o sin signo)
+    punpckhwd %2, XMM_ZERO
+   
+    cvtdq2ps %1, %1                     ;
+    cvtdq2ps %2, %2                     ; convierto %1 y %2 a SP floats (32 bits)    
+
+%endmacro
+
 section .data
 
 section .text
@@ -43,8 +69,9 @@ simdFreichen:
     
     mov ebx, WIDTH_AUX        ; ebx = WIDTH
 
-    mov esi, SRC         ; esi y edi apuntan a la fila actual de src y dst respectivamente
-    mov edi, DST
+    mov esi, SRC         ; esi apunta a la fila actual de src, donde se empieza a leer
+    mov edi, DST         
+    add edi, WIDTH       ; edi apunta a la fila siguiente de dst, donde se escribe
     
     ; recorro (height-2) filas con ecx
     mov ecx, HEIGHT
@@ -61,14 +88,14 @@ simdFreichen:
     fadd st0, st0
     fsqrt
     fstp dword RAIZ_2
-    movss xmm7, RAIZ_2
+    movss XMM_SQR2, RAIZ_2
     shufps XMM_SQR2, XMM_SQR2, 00000000b        ; XMM_SQR2 = [2^1/2|2^1/2|2^1/2|2^1/2]
     
     cicloFilas:
         ;;;
         ;;; Cálculo de la sumatoria de la primera columna fuera del ciclo
         ;;;
-        ; TODO calcular valor de la columna 0 y guardarlo en xmm4_1
+        ; TODO calcular valor de la columna 0 y guardarlo en xmm5_1
                 
         ; recorro columnas desde 1 hasta width, de a 8 en 8
         ; en cada iteración se levanta un bloque de 3x8 pixeles (comenzando en
@@ -84,116 +111,134 @@ simdFreichen:
             ;;; Derivada en X
             ;;;
             
-            ;;; levanta la primera fila de 8 en xmm0:xmm1 como SP floats
-
-            movdqu xmm0, [esi + edx]            ; xmm0 = [ | | | | | | | |0|1|2|3|4|5|6|7] (fila 1) (enteros 8-bit sin signo)
+            LOAD xmm0, xmm1                     ; carga primera fila en xmm0:xmm1
+            add esi, WIDTH          
+            LOAD xmm2, xmm3                     ; carga segunda fila en xmm2:xmm3
             
-            punpcklbw xmm0, XMM_ZERO                ; xmm0 = [ 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 ] (fila 1) (enteros 16-bit con o sin signo)
-            movdqu xmm1, xmm0                   ; xmm1 = xmm0
-                                                
-            punpcklwd xmm0, XMM_ZERO                ; xmm0 = [   0   |   1   |   2   |   3   ] (fila 1) (enteros 32-bit con o sin signo)
-            punpckhwd xmm1, XMM_ZERO                ; xmm1 = [   4   |   5   |   6   |   7   ] (fila 1)                "
-           
-            cvtdq2ps xmm0, xmm0                 ;
-            cvtdq2ps xmm1, xmm1                 ; convierto xmm0 y xmm1 a SP floats (32 bits)
-            
-            ;;; levanta la segunda fila de 8 en xmm2:xmm3 como SP floats
-                        
-            add esi, WIDTH                      ; avanza de fila
-            
-            movq xmm2, [esi + edx]              ; xmm2 = [ | | | | | | | |0|1|2|3|4|5|6|7] (fila 2)
-            
-            punpcklbw xmm2, XMM_ZERO            ; xmm2 = [ 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 ] (fila 2)
-            movdqu xmm3, xmm2                   ; xmm3 = xmm2
-                                                
-            punpcklwd xmm2, XMM_ZERO            ; xmm2 = [   0   |   1   |   2   |   3   ] (fila 2)
-            punpckhwd xmm3, XMM_ZERO            ; xmm3 = [   4   |   5   |   6   |   7   ] (fila 2)
-           
-            cvtdq2ps xmm2, xmm2                 ;
-            cvtdq2ps xmm3, xmm3                 ; convierto xmm2 y xmm3 a SP floats (32 bits)
-            
-            ;;; hace f1 = f1 + f2 * sqr(2)
-                        
-            mulps xmm2, xmm7                    ; 
-            mulps xmm3, xmm7                    ; multiplica segunda fila por sqr(2)
+            mulps xmm2, XMM_SQR2                ; 
+            mulps xmm3, XMM_SQR2                ; multiplica segunda fila por sqr(2)
             
             addps xmm0, xmm2                    ; suma primera y segunda fila
             addps xmm1, xmm3                    ; en xmm0:xmm1 quedan las dos primeras filas ya comprimidas
             
-            ;;; levanta la tercera fila de 8 en xmm2:xmm3 como SP floats
-                        
             add esi, WIDTH                      ; avanza de fila
+            LOAD xmm2, xmm3                     ; carga tercera fila en xmm2:xmm3
             
-            movq xmm2, [esi + edx]              ; xmm2 = [ | | | | | | | |0|1|2|3|4|5|6|7] (fila 3)
+            sub esi, WIDTH                      ;
+            sub esi, WIDTH                      ; retroceden las filas avanzadas
             
-            punpcklbw xmm2, XMM_ZERO            ; xmm2 = [ 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 ] (fila 3)
-            movdqu xmm3, xmm2                   ; xmm3 = xmm2
-                                                
-            punpcklwd xmm2, XMM_ZERO            ; xmm2 = [   0   |   1   |   2   |   3   ] (fila 3)
-            punpckhwd xmm3, XMM_ZERO            ; xmm3 = [   4   |   5   |   6   |   7   ] (fila 3)
-           
-            cvtdq2ps xmm2, xmm2                 ; 
-            cvtdq2ps xmm3, xmm3                 ; convierto xmm2 y xmm3 a SP floats (32 bits)
+            addps xmm0, xmm2                    ;
+            addps xmm1, xmm3                    ; suma tercera fila al resultado acumulado
             
-            ;;; suma la tercera fila al resultado acumulado (f1 = f1 + f3)
-            
-            addps xmm0, xmm2                    ; suma tercera fila
-            addps xmm1, xmm3
-            
-            ; En xmm0:xmm1 quedan 8 columnas comprimidas; además en xmm4 están
-            ; los valores de las dos columnas anteriores salvados en el paso anterior
-            
-            
+            ; En xmm0:xmm1 quedan 8 columnas comprimidas; además en xmm5 están
+            ; los valores de las dos columnas anteriores en X e Y salvados del
+            ; paso anterior
             
             ; xmm0 = [  (1)  |  (2)  |  (3)  |  (4)  ] 
             ; xmm1 = [  (5)  |  (6)  |  (7)  |  (8)  ]
-            ; xmm4 = [ (-1)  |  (0)  |   ?   |   ?   ]    (de la iteración anterior)
+            ; xmm5 = [ (-1)  |  (0)  | (-1)y |  (0)y ]    (de la iteración anterior)
             
-            ;;; calcula en xmm0 el valor de la derivada en X para las primeras cuatro columnas
+            ; Guarda en xmm2 los futuros valores de xmm5 para la próxima iteración
+            movdqu xmm2, xmm1                   ; xmm2 = [  (5)  |  (6)  |  (7)  |  (8)  ]
+            shufps xmm2, xmm5, 11101110b        ; xmm2 = [  (7)  |  (8)  | (-1)y |  (0)y ]
             
-            movdqu xmm2, xmm0                   ; xmm2 = [  (1)  |  (2)  |  (3)  |  (4)  ]             
-            shufps xmm4, xmm0, 01000100b        ; xmm4 = [ (-1)  |  (0)  |  (1)  |  (2)  ] 
-            subps xmm0, xmm4                    ; xmm0 = [  [0]  |  [1]  |  [2]  |  [3]  ]
             
-            ;;; IMPORTANTE: salva (7) y (8) en xmm4 para la próxima iteración (en donde se llamarán (-1) y (0))
-            pshufd xmm4, xmm1, 11101110b        ; xmm4 = [  (7)  |  (8)  |   ?   |   ?   ]
+            ;;; calcula en xmm4 el valor de la derivada en X para las primeras cuatro columnas
             
+            movdqu xmm4, xmm0                   ; xmm4 = [  (1)  |  (2)  |  (3)  |  (4)  ]             
+            shufps xmm5, xmm4, 01000100b        ; xmm5 = [ (-1)  |  (0)  |  (1)  |  (2)  ] 
+            subps xmm4, xmm5                    ; xmm4 = [  [0]  |  [1]  |  [2]  |  [3]  ]
+            
+            movdqu xmm5, xmm2                   ; restaura xmm5
+                        
             ;;; calcula en xmm1 el valor de la derivada en X para las últimas cuatro columnas
                         
-            shufps xmm2, xmm1, 01001110b        ; xmm2 = [  (3)  |  (4)  |  (5)  |  (6)  ]
-            subps xmm1, xmm2                    ; xmm1 = [  [4]  |  [5]  |  [6]  |  [7]  ]
+            shufps xmm0, xmm1, 01001110b        ; xmm0 = [  (3)  |  (4)  |  (5)  |  (6)  ]
+            subps xmm1, xmm0                    ; xmm1 = [  [4]  |  [5]  |  [6]  |  [7]  ]
+            
+            cvtps2dq xmm4, xmm4                 ; 
+            cvtps2dq xmm1, xmm1                 ; convierte los resultados a enteros signados (32 bits)
+            
+            ; empaqueta y convierte los resultados a enteros signados (16 bits)
+            packssdw xmm4, xmm1                 ; xmm4 = [[0]|[1]|[2]|[3]|[4]|[5]|[6]|[7]]
+            
+            ; xmm4 contiene derivadas en x para los 8 pixeles
+            ; xmm5 tiene los valores de X para la próxima iteración y conserva
+            ;      los de Y de la iteración anterior
+            
+            ;;;
+            ;;; Derivada en Y
+            ;;;
+            
+            LOAD xmm0, xmm1                     ; carga primera fila en xmm0:xmm1
+            add esi, WIDTH
+            add esi, WIDTH
+            LOAD xmm2, xmm3                     ; carga tercera fila en xmm2:xmm3
+            
+            sub esi, WIDTH                      ;
+            sub esi, WIDTH                      ; retroceden las filas avanzadas
+            
+            subps xmm2, xmm0
+            subps xmm3, xmm1                    ; deja en xmm2:xmm3 la diferencia entre las filas
+            
+            ; xmm2 = [  (1)  |  (2)  |  (3)  |  (4)  ] 
+            ; xmm3 = [  (5)  |  (6)  |  (7)  |  (8)  ]
+            ; xmm5 = [  (7)x |  (8)x | (-1)  |  (0)  ]    (de la iteración anterior)
+            
+            movdqu xmm0, xmm5                   ; xmm0 = [  (7)x |  (8)x | (-1)  |  (0)  ]
+            
+            ; Guarda en xmm5 los valores para la próxima iteración
+            shufps xmm5, xmm3, 11100100b        ; xmm5 = [  (7)x |  (8)x |  (7)  |  (8)  ]
+            
+            shufps xmm0, xmm2, 01001110b        ; xmm0 = [ (-1)  |  (0)  |  (1)  |  (2)  ]
+            
+            movdqu xmm1, xmm0                   ; xmm1 = [ (-1)  |  (0)  |  (1)  |  (2)  ]
+            shufps xmm1, xmm2, 10011001b        ; xmm1 = [  (0)  |  (1)  |  (2)  |  (3)  ]
+            
+            mulps xmm1, XMM_SQR2
+            addps xmm0, xmm1
+            addps xmm0, xmm2                    ; xmm0 = [  [0]  |  [1]  |  [2]  |  [3]  ]
+            
+            shufps xmm2, xmm3, 01001110b        ; xmm2 = [  (3)  |  (4)  |  (5)  |  (6)  ] 
+            movdqu xmm1, xmm2                   ; xmm1 = [  (3)  |  (4)  |  (5)  |  (6)  ] 
+            shufps xmm1, xmm3, 10011001b        ; xmm1 = [  (4)  |  (5)  |  (6)  |  (7)  ] 
+            
+            mulps xmm1, XMM_SQR2
+            addps xmm1, xmm2
+            addps xmm1, xmm3                    ; xmm1 = [  [4]  |  [5]  |  [6]  |  [7]  ]
             
             cvtps2dq xmm0, xmm0                 ; 
             cvtps2dq xmm1, xmm1                 ; convierte los resultados a enteros signados (32 bits)
             
-            packssdw xmm0, xmm1                 ; xmm0 = [[0]|[1]|[2]|[3]|[4]|[5]|[6][7]]
+            ; empaqueta y convierte los resultados a enteros signados (16 bits)
+            packssdw xmm0, xmm1                 ; xmm0 = [[0]|[1]|[2]|[3]|[4]|[5]|[6]|[7]]
             
-            ;;; xmm0 contiene derivadas en x para los 8 pixeles
+            ; xmm4 = [[0]|[1]|[2]|[3]|[4]|[5]|[6]|[7]] (en X)
+            ; xmm0 = [[0]|[1]|[2]|[3]|[4]|[5]|[6]|[7]] (en Y)
             
             ;;;
-            ;;; Derivada en Y
-            ;;; TODO
+            ;;; Suma de X e Y
+            ;;;
             
-            ;;; TODO merge de X e Y
+            pmaxsw xmm0, XMM_ZERO               ;
+            pmaxsw xmm4, XMM_ZERO               ; satura las derivadas a cero
             
-            packuswb xmm0, XMM_ZERO             ; pasa xmm0 a bytes y satura a 0 y 255 (sin signo)
+            paddw xmm0, xmm4                    ; suma las derivadas
             
-            movdqu [edi + edx - 1], xmm0
+            packuswb xmm0, XMM_ZERO             ; pasa los valores a bytes y satura a 0 y 255
+            movq [edi + edx - 1], xmm0          ; vuelca los 8 resultados en el destino
             
-            ;; TODO continuar
-            ; punpcklbw xmm0, XMM_ZERO            ; vuelve a convertir xmm2 a words
+            add edx, 8                          ; avanza a la siguiente columna de 8
+            cmp edx, WIDTH                  
             
-            ; IMPORTANTE: retrocede las filas
-            sub esi, WIDTH
-            sub esi, WIDTH
-                                                
-            add edx, 8
-            cmp edx, WIDTH
         jl cicloColumnas
         
+        ; borro con negro la "basura" de las columnas borde
+        mov word [edi], 0                       ; dos primeras columnas
+        mov byte [edi + edx - 2], 0             ; última columna
         
-        add esi, WIDTH
-        add edi, WIDTH
+        add esi, WIDTH                          ;
+        add edi, WIDTH                          ; avanzan los punteros a la fila actual
         
         dec ecx
     jg cicloFilas
