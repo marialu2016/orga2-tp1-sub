@@ -32,6 +32,7 @@ comenzarRutina:
 ;recordemos q esi+edx es la posicion a22 de la matriz actual (el centro)
 cicloF:
 	xor edx, edx 		;acumulador de la columna
+    mov BYTE [edi], 0   ;pongo en 0 el primero de cada fila
 	inc edx			;empieza en 1 para que salga una columna antes VER QUE ONDA
 	cicloC:			;accesos a memoria
 		mascaraX:
@@ -103,7 +104,7 @@ cicloF:
 			packuswb xmm6, xmm0
 			;xmm6 = los primeros 14 bytes son los que nos improta, tiene todo los datos
 			;bien guardados (cuando ande) y los ultimos 2 los vamos apisar asi que no importa 
-			;movdqu [edi+edx], xmm6
+			movdqu [edi+edx], xmm6
 
 		mascaraY:
 			sub esi, ebx
@@ -147,7 +148,7 @@ cicloF:
 			paddw xmm4, xmm5
 
 			movdqu xmm5, xmm1
-			psrldq xmm5, 2
+			psrldq xmm5, 4
 			movdqu xmm6, xmm3
 			pslldq xmm6, 6*2
 			paddw xmm5, xmm6
@@ -166,8 +167,8 @@ cicloF:
 			paddw xmm0, xmm3
 			packuswb xmm4, xmm0
 
-			;movdqu xmm5, [edi+edx]
-			;paddusb xmm4, xmm5
+			movdqu xmm5, [edi+edx]
+			paddusb xmm4, xmm5
 			movdqu [edi+edx], xmm4
 
 

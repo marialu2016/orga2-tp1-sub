@@ -1,6 +1,6 @@
 .PHONY= clean clean_all build
 
-OBJ = main.o cImpl.o asmRoberts.o asmPrewitt.o asmSobel.o simdRoberts.o simdPrewitt.o simdFreichen.o
+OBJ = main.o cImpl.o asmRoberts.o asmPrewitt.o asmSobel.o simdRoberts.o simdPrewitt.o simdSobel.o simdFreichen.o
 
 
 # Compila para debugging y elimina los *.o

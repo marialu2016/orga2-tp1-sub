@@ -21,7 +21,7 @@ extern void simdRoberts(const char* src, char* dst, int ancho, int alto);
 extern void simdPrewitt(const char* src, char* dst, int ancho, int alto);
 
 /* Sobel en X, Y o ambos. */
-//TODO extern void simdSobel(const char* src, char* dst, int ancho, int alto, int xorder, int yorder);
+extern void simdSobel(const char* src, char* dst, int ancho, int alto, int xorder, int yorder);
 
 /* Frei-chen en X e Y. */
 extern void simdFreichen(const char* src, char* dst, int ancho, int alto);
@@ -258,7 +258,6 @@ int main(int argc, char** argv) {
             __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
             simdPrewitt(src->imageData, dst->imageData, src->width, src->height);
             __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
-/*
         } else if(cmp(oper, sobelSIMD_X)) {
             // Sobel usando SIMD solo en X
             __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
@@ -276,7 +275,6 @@ int main(int argc, char** argv) {
             __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
             simdSobel(src->imageData, dst->imageData, src->width, src->height, 1, 1);
             __asm__ __volatile__ ("rdtsc;sub %0,%%eax;mov %%eax,%0" : : "g" (tscl));
-*/
         } else if(cmp(oper, freichenSIMD_XY)) {
             // Sobel usando SIMD solo en Y
             __asm__ __volatile__ ("rdtsc;mov %%eax,%0" : : "g" (tscl)); // Toma estado del TSC
