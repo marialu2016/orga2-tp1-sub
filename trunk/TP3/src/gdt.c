@@ -76,6 +76,58 @@ gdt_entry gdt[GDT_COUNT] = {
 		(unsigned char) 1,		//DB [22]
 		(unsigned char) 0,		//G [23]
 		(unsigned char) 0x00		//BASE [24:31]
+	},
+
+	/* EL DESC DE LA TAREA DEL DUMMY */
+	(gdt_entry){
+		(unsigned short) 0x6C,	//limite [0:15]
+		(unsigned short) 0,	//base [16:31]
+		(unsigned char) 0x0B,		//base []
+		(unsigned char) 0x9,		//tipo [24]
+		(unsigned char) 0,		//S [25]
+		(unsigned char) 0, 		//DPL [26:27]
+		(unsigned char) 1,		//P [28]
+		(unsigned char) 0x0,		//limite [16:19]
+		(unsigned char) 0,		//AVL [20]
+		(unsigned char) 0,		//L [21]
+		(unsigned char) 1,		//DB [22]
+		(unsigned char) 0,		//G [23]
+		(unsigned char) 0x00		//BASE [24:31]
+	},
+
+
+	/* EL DESC DE LA TAREA DEL PINTOR */
+	(gdt_entry){
+		(unsigned short) 0x67,	//limite [0:15]  
+		(unsigned short) 0,	//base [16:31]
+		(unsigned char) 0x0,		//base []
+		(unsigned char) 0x9,		//tipo [24]
+		(unsigned char) 0,		//S [25]
+		(unsigned char) 0, 		//DPL [26:27]
+		(unsigned char) 1,		//P [28]
+		(unsigned char) 0x0,		//limite [16:19]
+		(unsigned char) 0,		//AVL [20]
+		(unsigned char) 0,		//L [21]
+		(unsigned char) 1,		//DB [22]
+		(unsigned char) 0,		//G [23]
+		(unsigned char) 0x00		//BASE [24:31]
+	},
+
+/* EL DESC DE LA TAREA DEL TRADUCTOR */
+	(gdt_entry){
+		(unsigned short) 0x6C,	//limite [0:15]
+		(unsigned short) 0,	//base [16:31]
+		(unsigned char) 0x0,		//base []
+		(unsigned char) 0x9,		//tipo [24]
+		(unsigned char) 0,		//S [25]
+		(unsigned char) 0, 		//DPL [26:27]
+		(unsigned char) 1,		//P [28]
+		(unsigned char) 0x0,		//limite [16:19]
+		(unsigned char) 0,		//AVL [20]
+		(unsigned char) 0,		//L [21]
+		(unsigned char) 1,		//DB [22]
+		(unsigned char) 0,		//G [23]
+		(unsigned char) 0x00		//BASE [24:31]
 	}
 };
 
