@@ -99,9 +99,11 @@ _isr16:
     jmp $
     iret
 
+
+; Interrupción del reloj
 _isr32:    
     cli
-    xchg bx, bx
+    ;xchg bx, bx
     call next_clock
     sti
     iret
