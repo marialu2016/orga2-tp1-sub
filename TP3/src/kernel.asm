@@ -158,30 +158,66 @@ BITS 32
 
             mov al, 0xFF
             out 0xA1, al
-        pic_enable:
-            mov al, 0x00
-            out 0x21, al
-            mov al, 0x00
-            out 0xA1, al
+       
 
             ; TODO: Cargar el registro IDTR
             lidt[IDT_DESC]
-            sti
-        jmp $
+            
     ; Ejercicio 4
     
         ; TODO: Inicializar las TSS
         
         ; TODO: Inicializar correctamente los descriptores de TSS en la GDT
-        
+        xchg bx, bx
+        mov eax, gdt
+        add eax, 0x20
+
+        mov ebx, tsss
+ 
+        mov [eax+2], bx
+        shr ebx, 16
+        mov [eax+4], bl
+        mov [eax+7], bh
+
+        add eax, 8 
+
+        mov ebx, tsss
+        add ebx, 104
+
+        mov [eax+2], bx
+        shr ebx, 16
+        mov [eax+4], bl
+        mov [eax+7], bh
+
+        add eax, 8 
+
+        mov ebx, tsss
+        add ebx, 104
+        add ebx, 104
+
+        mov [eax+2], bx
+        shr ebx, 16
+        mov [eax+4], bl
+        mov [eax+7], bh
+
+
         ; TODO: Cargar el registro TR con el descriptor de la GDT de la TSS actual
-        
+        ; BREAKPOINT
+        xchg bx, bx 
+
+
+        mov ax, 0x20
+        ltr ax
         ; TODO: Habilitar la PIC
-        
+         pic_enable:
+            mov al, 0x00
+            out 0x21, al
+            mov al, 0x00
+            out 0xA1, al
         ; TODO: Habilitar Interrupciones
-        
+        sti
         ; TODO: Saltar a la primer tarea
-        
+        jmp 0x28:0
         
 %include "a20.asm"
 

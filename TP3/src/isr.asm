@@ -8,28 +8,100 @@ extern pic1_intr_end
 ; TODO: Definir el resto de las ISR
 ; ----------------------------------------------------------------
 
-; global _isr0, _isr4, _isr6, _isr7, _isr8, _isr10, _isr11, _isr12, _isr13, _isr14, _isr16, _isr32
-global _isr0, _isr32, _isr33
+global _isr0, _isr4, _isr6, _isr7, _isr8, _isr10, _isr11, _isr12, _isr13, _isr14, _isr16, _isr32
+;global _isr0, _isr32, _isr33
 msgisr0: db 'EXCEPCION: Division por cero'
 msgisr0_len equ $-msgisr0
-
 _isr0:
-; _isr4:
-; _isr6:
-; _isr7:
-; _isr8:
-; _isr10:
-; _isr11:
-; _isr12:
-; _isr13:
-; _isr14:
-; _isr16:
 	mov edx, msgisr0
 	IMPRIMIR_TEXTO edx, msgisr0_len, 0x0C, 0, 0, 0x13000
+	jmp $
+    iret
+
+msgisr4: db 'EXCEPCION: OVERFLOW'
+msgisr4_len equ $-msgisr4
+_isr4:
+    mov edx, msgisr4
+    IMPRIMIR_TEXTO edx, msgisr4_len, 0x0C, 0, 0, 0x13000
+    jmp $
+    iret
+
+msgisr6: db 'EXCEPCION: INVALID OPCODE'
+msgisr6_len equ $-msgisr6
+_isr6:
+    mov edx, msgisr6
+    IMPRIMIR_TEXTO edx, msgisr6_len, 0x0C, 0, 0, 0x13000
+    jmp $
     iret
 	
-_isr32:
+msgisr7: db 'EXCEPCION: DEVICE NOT AVAILABLE'
+msgisr7_len equ $-msgisr7
+_isr7:
+    mov edx, msgisr7
+    IMPRIMIR_TEXTO edx, msgisr7_len, 0x0C, 0, 0, 0x13000
+    jmp $
+    iret
+
+msgisr8: db 'EXCEPCION: DOUBLE FAULT'
+msgisr8_len equ $-msgisr8
+_isr8:
+    mov edx, msgisr8
+    IMPRIMIR_TEXTO edx, msgisr8_len, 0x0C, 0, 0, 0x13000
+    jmp $
+    iret
+
+msgisr10: db 'EXCEPCION: INVALID TSS'
+msgisr10_len equ $-msgisr10
+_isr10:
+    mov edx, msgisr10
+    IMPRIMIR_TEXTO edx, msgisr10_len, 0x0C, 0, 0, 0x13000
+    jmp $
+    iret
+
+msgisr11: db 'EXCEPCION: SEGMENT NOT PRESENT'
+msgisr11_len equ $-msgisr11
+_isr11:
+    mov edx, msgisr11
+    IMPRIMIR_TEXTO edx, msgisr11_len, 0x0C, 0, 0, 0x13000
+    jmp $
+    iret
+
+msgisr12: db 'EXCEPCION: STACK-SEGMENT FAULT'
+msgisr12_len equ $-msgisr12
+_isr12:
+    mov edx, msgisr12
+    IMPRIMIR_TEXTO edx, msgisr12_len, 0x0C, 0, 0, 0x13000
+    jmp $
+    iret
+
+msgisr13: db 'EXCEPCION: GENERAL PROTECTION'
+msgisr13_len equ $-msgisr13
+_isr13:
+    mov edx, msgisr13
+    IMPRIMIR_TEXTO edx, msgisr13_len, 0x0C, 0, 0, 0x13000
+    jmp $
+    iret
+
+msgisr14: db 'EXCEPCION: PAGE FAULT'
+msgisr14_len equ $-msgisr14
+_isr14:
+    xchg bx, bx
+    mov edx, msgisr14
+    IMPRIMIR_TEXTO edx, msgisr14_len, 0x0C, 0, 0, 0x13000
+    jmp $
+    iret
+
+msgisr16: db 'EXCEPCION: FPU ERROR'
+msgisr16_len equ $-msgisr16
+_isr16:
+    mov edx, msgisr16
+    IMPRIMIR_TEXTO edx, msgisr16_len, 0x0C, 0, 0, 0x13000
+    jmp $
+    iret
+
+_isr32:    
     cli
+    xchg bx, bx
     call next_clock
     sti
     iret
