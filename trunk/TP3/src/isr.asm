@@ -8,8 +8,8 @@ extern pic1_intr_end
 ; TODO: Definir el resto de las ISR
 ; ----------------------------------------------------------------
 
-global _isr0, _isr4, _isr6, _isr7, _isr8, _isr10, _isr11, _isr12, _isr13, _isr14, _isr16, _isr32
-;global _isr0, _isr32, _isr33
+global _isr0, _isr1, _isr2, _isr3, _isr4, _isr5, _isr6, _isr7, _isr8, _isr9, _isr10, _isr11, _isr12, _isr13, _isr14, _isr15, _isr16, _isr17, _isr18, _isr19, _isr32
+
 msgisr0: db 'EXCEPCION: Division por cero'
 msgisr0_len equ $-msgisr0
 _isr0:
@@ -18,11 +18,43 @@ _isr0:
 	jmp $
     iret
 
+msgisr1: db 'EXCEPCION: RESERVED'
+msgisr1_len equ $-msgisr1
+_isr1:
+	mov edx, msgisr1
+	IMPRIMIR_TEXTO edx, msgisr1_len, 0x0C, 0, 0, 0x13000
+	jmp $
+    iret
+
+msgisr2: db 'EXCEPCION: NMI INTERRUPT'
+msgisr2_len equ $-msgisr2
+_isr2:
+	mov edx, msgisr2
+	IMPRIMIR_TEXTO edx, msgisr2_len, 0x0C, 0, 0, 0x13000
+	jmp $
+    iret
+
+msgisr3: db 'EXCEPCION: BREAKPOINT'
+msgisr3_len equ $-msgisr3
+_isr3:
+	mov edx, msgisr3
+	IMPRIMIR_TEXTO edx, msgisr3_len, 0x0C, 0, 0, 0x13000
+	jmp $
+    iret
+
 msgisr4: db 'EXCEPCION: OVERFLOW'
 msgisr4_len equ $-msgisr4
 _isr4:
     mov edx, msgisr4
     IMPRIMIR_TEXTO edx, msgisr4_len, 0x0C, 0, 0, 0x13000
+    jmp $
+    iret
+
+msgisr5: db 'EXCEPCION: BOUND RANGE EXCEEDED'
+msgisr5_len equ $-msgisr5
+_isr5:
+    mov edx, msgisr5
+    IMPRIMIR_TEXTO edx, msgisr5_len, 0x0C, 0, 0, 0x13000
     jmp $
     iret
 
@@ -47,6 +79,14 @@ msgisr8_len equ $-msgisr8
 _isr8:
     mov edx, msgisr8
     IMPRIMIR_TEXTO edx, msgisr8_len, 0x0C, 0, 0, 0x13000
+    jmp $
+    iret
+
+msgisr9: db 'EXCEPCION: COPROCESSOR SEGMENT OVERRUN'
+msgisr9_len equ $-msgisr9
+_isr9:
+    mov edx, msgisr9
+    IMPRIMIR_TEXTO edx, msgisr9_len, 0x0C, 0, 0, 0x13000
     jmp $
     iret
 
@@ -91,6 +131,15 @@ _isr14:
     jmp $
     iret
 
+msgisr15: db 'EXCEPCION: INTEL RESERVERD'
+msgisr15_len equ $-msgisr15
+_isr15:
+    xchg bx, bx
+    mov edx, msgisr15
+    IMPRIMIR_TEXTO edx, msgisr15_len, 0x0C, 0, 0, 0x13000
+    jmp $
+    iret
+
 msgisr16: db 'EXCEPCION: FPU ERROR'
 msgisr16_len equ $-msgisr16
 _isr16:
@@ -99,15 +148,49 @@ _isr16:
     jmp $
     iret
 
+msgisr17: db 'EXCEPCION: ALIGNMENT CHEHCK'
+msgisr17_len equ $-msgisr17
+_isr17:
+    mov edx, msgisr17
+    IMPRIMIR_TEXTO edx, msgisr17_len, 0x0C, 0, 0, 0x13000
+    jmp $
+    iret
+
+msgisr18: db 'EXCEPCION: MACHINE CHECHK'
+msgisr18_len equ $-msgisr18
+_isr18:
+    mov edx, msgisr18
+    IMPRIMIR_TEXTO edx, msgisr18_len, 0x0C, 0, 0, 0x13000
+    jmp $
+    iret
+
+msgisr19: db 'EXCEPCION: SIMD FLOATING-POINT'
+msgisr19_len equ $-msgisr19
+_isr19:
+    mov edx, msgisr19
+    IMPRIMIR_TEXTO edx, msgisr19_len, 0x0C, 0, 0, 0x13000
+    jmp $
+    iret
 
 ; Interrupción del reloj
 _isr32:    
     cli
-    ;xchg bx, bx
     call next_clock
-    sti
-    iret
-
+    ;paso de tarea
+    cmp BYTE [isrTarea], 0x0
+    jne pasarAPintor    
+    pasarATraductor:
+    	mov BYTE [isrTarea], 0x1
+    	xchg bx, bx
+        jmp 0x30:0
+        sti
+        iret
+    pasarAPintor:
+    	mov BYTE [isrTarea], 0x0
+    	xchg bx, bx
+        jmp 0x28:0
+        sti
+        iret
 
 ; Funcion para dibujar el reloj.
 ; void next_clock(void)
@@ -135,49 +218,4 @@ isrmessage1: db '|'
 isrmessage2: db '/'
 isrmessage3: db '-'
 isrmessage4: db '\'
-
-_isr33:
-        cli
-        pushad
-        in al, 0x60
-
-        test al, 0x80
-        jnz .saltar
-
-        mov ebx, letra_null
-        inc ebx
-        cmp al, [scan_a]
-        jz .cont
-        inc ebx
-        cmp al, [scan_c]
-        jz .cont
-        inc ebx
-        cmp al, [scan_r]
-        jz .cont
-        inc ebx
-        cmp al, [scan_e]
-        jz .cont
-        mov ebx, letra_null
-    .cont:
-        mov ecx, [columna]
-        IMPRIMIR_TEXTO ebx, 1, 0x0A, 23, ecx, 0x13000
-
-        inc dword [columna]
-    .saltar:
-        mov al, 0x20
-        out 0x20, al
-
-        popad
-        sti
-        iret
-
-columna: dd 0x0000000A
-letra_null: db ' '
-letra_a: db 'a'
-letra_c: db 'c'
-letra_r: db 'r'
-letra_e: db 'e'
-scan_a: db 0x1E
-scan_c: db 0x2E
-scan_r: db 0x13
-scan_e: db 0x12
+isrTarea: db 0x0
