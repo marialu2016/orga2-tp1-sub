@@ -32,7 +32,7 @@ comenzarRutina:
 ;recordemos q esi+edx es la posicion a22 de la matriz actual (el centro)
 cicloF:
 	xor edx, edx 		;acumulador de la columna
-    mov BYTE [edi], 0   ;pongo en 0 el primero de cada fila
+	mov BYTE [edi], 0	;pongo en negro el primer pixel de cada fila
 	inc edx			;empieza en 1 para que salga una columna antes VER QUE ONDA
 	cicloC:			;accesos a memoria
 		mascaraX:
@@ -108,11 +108,11 @@ cicloF:
 
 		mascaraY:
 			sub esi, ebx
-			movdqu xmm6, [esi+edx-1] ;linea de arriba
+			movdqu xmm6, [esi+edx-1] ;linea de arriba (a1)
 			add esi, ebx
 			add esi, ebx
-			movdqu xmm7, [esi+edx-1] ;linea de abajo
-			sub esi, ebx
+			movdqu xmm7, [esi+edx-1] ;linea de abajo (a3)
+			sub esi, ebx		 ;dejo esi en a2
 			movdqu xmm0, xmm6
 			pxor xmm5, xmm5
 			punpcklbw xmm0, xmm5 ;xmm0=[a1.1,a1.2,..,a1.8]
@@ -123,65 +123,67 @@ cicloF:
 			movdqu xmm3, xmm7
 			punpckhbw xmm3, xmm5 ;xmm5=[a3.9,a3.10,..,a3.16]
 			;ahora empeiza 
-			movdqu xmm4, xmm1
-			psubw xmm4, xmm0
+			movdqu xmm4, xmm1 ;xmm4 = xmm1 
+			psubw xmm4, xmm0  ;xmm4 = xmm1-xmm0
 
-			movdqu xmm5, xmm0
-			psrldq xmm5, 2
+			movdqu xmm5, xmm0 ;xmm5 = xmm0
+			psrldq xmm5, 2	  ;xmm5 = xmm0>>2B
 			movdqu xmm6, xmm2
 			pslldq xmm6, 7*2
-			paddw xmm5, xmm6
-			psubw xmm4, xmm5
+			paddw xmm5, xmm6  ;xmm5 = [a1.2,..,a1.9] = resta1
+			psubw xmm4, xmm5  ;xmm4 = xmm1-xmm0-resta1
 
 			movdqu xmm5, xmm0
 			psrldq xmm5, 4
 			movdqu xmm6, xmm2
 			pslldq xmm6, 6*2
-			paddw xmm5, xmm6
-			psubw xmm4, xmm5
+			paddw xmm5, xmm6  ;xmm5 = [a1.3,..,a1.10] = resta 2
+			psubw xmm4, xmm5  ;xmm4 = xmm1-xmm0-resta1-resta2
 
 			movdqu xmm5, xmm1
 			psrldq xmm5, 2
 			movdqu xmm6, xmm3
 			pslldq xmm6, 7*2
-			paddw xmm5, xmm6
-			paddw xmm4, xmm5
+			paddw xmm5, xmm6  ;xmm5 = [a3.2,..,a3.9] = suma1
+			paddw xmm4, xmm5  ;xmm4 = xmm1-xmm0-resta1-resta2+suma1
 
 			movdqu xmm5, xmm1
 			psrldq xmm5, 4
 			movdqu xmm6, xmm3
 			pslldq xmm6, 6*2
-			paddw xmm5, xmm6
-			paddw xmm4, xmm5
-
+			paddw xmm5, xmm6  ;xmm5 = [a3.3,..,a3.10] = suma2
+			paddw xmm4, xmm5  ;xmm4 = xmm1-xmm2-resta1-resta2+suma1+suma2
+			;ahora los 6 bytes de la parte alta (de los 8)
 			pxor xmm0, xmm0
-			psubw xmm0, xmm2
-			paddw xmm0, xmm3
-			psrldq xmm2, 2
-			psubw xmm0, xmm2
-			psrldq xmm3, 2
-			paddw xmm0, xmm3
-			psrldq xmm2, 2
-			psubw xmm0, xmm2
-			psrldq xmm3, 2
-			paddw xmm0, xmm3
+			psubw xmm0, xmm2  ;xmm0 = -xmm2
+			paddw xmm0, xmm3  ;xmm0 = -xmm2+xmm3
+			psrldq xmm2, 2    ;xmm2 = xmm2>>2B = resta1
+			psubw xmm0, xmm2  ;xmm0 = -xmm2+xmm3-resta1
+			psrldq xmm3, 2    ;xmm3 = xmm3>>2B = suma1
+			paddw xmm0, xmm3  ;xmm0 = -xmm2+xmm3-resta1+suma1
+			psrldq xmm2, 2    ;xmm2 = xmm2>>2B = resta2
+			psubw xmm0, xmm2  ;xmm0 = -xmm2+xmm3-resta1+suma1-resta2
+			psrldq xmm3, 2    ;xmm3 = xmm3>>2B = suma2
+			paddw xmm0, xmm3  ;xmm0 = -xmm2+xmm3-resta1+suma1-resta2+suma2
 			packuswb xmm4, xmm0
+			;ahora en xmm4 queda los 14 prixeles importantes ordenados
+			;que son los que se ponen en Y
 
-			movdqu xmm5, [edi+edx]
-			paddusb xmm4, xmm5
-			movdqu [edi+edx], xmm4
+		 	movdqu xmm5, [edi+edx] ;levanta lo que hay guardado en dst q es la mascaraX
+			paddusb xmm4, xmm5 ;lo suma
+			movdqu [edi+edx], xmm4 ;lo guarda de nuevo
 
 
-		add edx, 14
-		cmp edx, ebx
+		add edx, 14  ;se mueve 14 pixeles mas a la derecha
+		cmp edx, ebx ;y se ve si si tiene que salir
 		jl cicloC
 
 	;aca sigue cicloF
-	mov BYTE [edi+ebx-1], 0
+	mov BYTE [edi+ebx-1], 0 ;pone en negro el utlimo pixel de cada fila
 	add esi, ebx 	;primer fila de la siguiente columna del src
 	add edi, ebx	;primer fila de la siguiente columna del dst
-	inc ecx
-	cmp ecx, HEIGHT
+	inc ecx		;aumenta la fila
+	cmp ecx, HEIGHT ;y ve si tiene que salir
 	jne cicloF
 
 fin:
