@@ -19,11 +19,6 @@ simdSobel:
 	push ebx
 	
 comenzarRutina:
-    
-    mov eax, XOrder
-    shl eax, 1
-    or eax, YOrder
-
 	;dec DWORD WIDTH	;hacemos que recorra hasta WIDHT-1
 	dec DWORD HEIGHT;hacemos que recorra hasta HEIGHT-1
 
@@ -39,13 +34,14 @@ comenzarRutina:
 ;recordemos q esi+edx es la posicion a22 de la matriz actual (el centro)
 cicloF:
 	xor edx, edx 		;acumulador de la columna
-    mov BYTE [edi], 0   ;pongo en 0 el primero de cada fila
+	mov BYTE [edi], 0   	;pongo en negro el primer pixel de cada fila
 	inc edx			;empieza en 1 para que salga una columna antes VER QUE ONDA
 	cicloC:			;accesos a memoria
         
+	;VEMOS SI TIENE QUE HACER LA MASCARA EN X
         cmp DWORD XOrder, 1
-        jne pX      ;si XOrder!=1 saltea X
-        jmp mascaraX
+        jne pX      	;si XOrder!=1 saltea X
+        jmp mascaraX	;no se hace directo con jne porque tira error de que el salto es muy largo
         pX:
           jmp pasarX
 		mascaraX:
@@ -79,7 +75,8 @@ cicloF:
 			pxor xmm6,xmm6
 			psubw xmm6, xmm0 ;xmm6 = -xmm0
 			psubw xmm6, xmm1 ;xmm6 = -xmm0-xmm1
-			psubw xmm6, xmm2 ;xmm6 = -xmm0-xmm1-xmm2
+			psubw xmm6, xmm1 ;xmm6 = -xmm0-2*xmm1
+			psubw xmm6, xmm2 ;xmm6 = -xmm0-2*xmm1-xmm2
 
 			;ahora voy por la suma de las otras partes
 			movdqu xmm7, xmm0
@@ -87,51 +84,55 @@ cicloF:
 			movdqu xmm0, xmm3 ;xmm0 = xmm3
 			pslldq xmm0, 2*6  ;xmm0 = [0,..,a1.9,a1.10]
 			paddw xmm7, xmm0  ;xmm7 = [a1.3,..,a.10] = suma1
-			paddw xmm6, xmm7  ;xmm6 = -xmm0-xmm1-xmm2+suma1
+			paddw xmm6, xmm7  ;xmm6 = -xmm0-2*xmm1-xmm2+suma1
 
 			movdqu xmm7, xmm1
 			psrldq xmm7, 2*2  ;xmm7 = xmm1>>4B = [a2.3,..,a2.8,0,0]
 			movdqu xmm0, xmm4 ;xmm0 = xmm4
 			pslldq xmm0, 2*6  ;xmm0 = [0,..,0,a2.9,a2.10]
 			paddw xmm7, xmm0  ;xmm7 = [a2.3,..,a2.10] = suma2
-			paddw xmm6, xmm7  ;xmm6 = -xmm0-xmm1-xmm2+suma1+suma2
+			paddw xmm6, xmm7  ;xmm6 = -xmm0-2*xmm1-xmm2+suma1+suma2
+			paddw xmm6, xmm7  ;xmm6 = -xmm0-2*xmm1-xmm2+suma1+2*suma2
 
 			movdqu xmm7, xmm2
 			psrldq xmm7, 2*2  ;xmm7 = xmm2>>4B = [a3.3,..,a.8,0,0]
 			movdqu xmm0, xmm5 ;xmm0 = xmm5
 			pslldq xmm0, 2*6  ;xmm0 = [0,..,0,a3.9,a3.10]
 			paddw xmm7, xmm0  ;xmm7 = [a3.3,..,a3.10] = suma3
-			paddw xmm6, xmm7  ;xmm6= -xmm0-xmm1-xmm2+suma1+suma2+suma3
+			paddw xmm6, xmm7  ;xmm6= -xmm0-2*xmm1-xmm2+suma1+2*suma2+suma3
 			
 			;ahora hay que hacer el calculo de los proxomos 6 (con 8 datos)
 			pxor xmm0, xmm0  ;xmm0 = 0 aca se va a guardar estos datos
 			psubw xmm0, xmm3 ;xmm0 = -xmm3
 			psubw xmm0, xmm4 ;xmm0 = -xmm3-xmm4
-			psubw xmm0, xmm5 ;xmm0 = -xmm3-xmm4-xmm5
+			psubw xmm0, xmm4 ;xmm0 = -xmm3-2*xmm4
+			psubw xmm0, xmm5 ;xmm0 = -xmm3-2*xmm4-xmm5
 			psrldq xmm3, 2*2 ;xmm3>>4B = [a1.11,..,a1,.16,0,0] = suma1
-			paddw xmm0, xmm3 ;xmm0 = -xmm3-xmm4-xmm5+suma1
+			paddw xmm0, xmm3 ;xmm0 = -xmm3-2*xmm4-xmm5+suma1
 			psrldq xmm4, 2*2 ;xmm4>>4B = [a2.11,..,a2.16,0,0] = suma2
-			paddw xmm0, xmm4 ;xmm0 = -xmm3-xmm4-xmm5+suma1+suma2
+			paddw xmm0, xmm4 ;xmm0 = -xmm3-2*xmm4-xmm5+suma1+suma2
+			paddw xmm0, xmm4 ;xmm0 = -xmm3-2*xmm4-xmm5+suma1+2*suma2
 			psrldq xmm5, 2*2 ;xmm5>>4B = [a3.11,..,a3.16,0,0] = suma3
-			paddw xmm0, xmm5 ;xmm0 = -xmm3-xmm4-xmm4+suma1+suma2+suma3 = lo que queremos
+			paddw xmm0, xmm5 ;xmm0 = -xmm3-2*xmm4-xmm4+suma1+2*suma2+suma3 = lo que queremos
 			packuswb xmm6, xmm0
 			;xmm6 = los primeros 14 bytes son los que nos improta, tiene todo los datos
 			;bien guardados (cuando ande) y los ultimos 2 los vamos apisar asi que no importa 
 			movdqu [edi+edx], xmm6
 
-        pasarX:
-            cmp DWORD YOrder, 1
-            jne pY          ;si Yorder!=1 lo saltea
-            jmp mascaraY        ;esta hehco asi xq sino tiraba
-            pY: jmp pasarY      ;que la etiqueta estaba lejos
+	pasarX:
+		;ahora vemos si tiene que hacer la mascara en y
+		cmp DWORD YOrder, 1
+		jne pY          ;si Yorder!=1 lo saltea
+		jmp mascaraY        ;esta hehco asi xq sino tiraba
+		pY: jmp pasarY      ;que la etiqueta estaba lejos
 		mascaraY:
 			sub esi, ebx
-			movdqu xmm6, [esi+edx-1] ;linea de arriba
+			movdqu xmm6, [esi+edx-1] ;linea de arriba (a1)
 			add esi, ebx
 			add esi, ebx
-			movdqu xmm7, [esi+edx-1] ;linea de abajo
-			sub esi, ebx
-			movdqu xmm0, xmm6
+			movdqu xmm7, [esi+edx-1] ;linea de abajo (a3)
+			sub esi, ebx       ;dejo esi en a2
+			movdqu xmm0, xmm6 
 			pxor xmm5, xmm5
 			punpcklbw xmm0, xmm5 ;xmm0=[a1.1,a1.2,..,a1.8]
 			movdqu xmm1, xmm7
@@ -141,65 +142,69 @@ cicloF:
 			movdqu xmm3, xmm7
 			punpckhbw xmm3, xmm5 ;xmm5=[a3.9,a3.10,..,a3.16]
 			;ahora empeiza 
-			movdqu xmm4, xmm1
-			psubw xmm4, xmm0
+			movdqu xmm4, xmm1 ;xmm4 = xmm1
+			psubw xmm4, xmm0  ;xmm4 = xmm1-xmm0
 
-			movdqu xmm5, xmm0
-			psrldq xmm5, 2
+			movdqu xmm5, xmm0 ;xmm5 = xmm0
+			psrldq xmm5, 2    ;xmm5 = xmm0>>2B
 			movdqu xmm6, xmm2
-			pslldq xmm6, 7*2
-			paddw xmm5, xmm6
-			psubw xmm4, xmm5
-
+			pslldq xmm6, 7*2 
+			paddw xmm5, xmm6  ;xmm5 = [a1.2,..,a1.9] = resta1
+			psubw xmm4, xmm5  ;xmm4 = xmm1-xmm0-resta1
+			psubw xmm4, xmm5  ;xmm4 = xmm1-xmm0-2*resta1
+			
 			movdqu xmm5, xmm0
 			psrldq xmm5, 4
 			movdqu xmm6, xmm2
 			pslldq xmm6, 6*2
-			paddw xmm5, xmm6
-			psubw xmm4, xmm5
+			paddw xmm5, xmm6  ;xmm5 = [a1.3,..,a1.10] = resta2
+			psubw xmm4, xmm5  ;xmm4 = xmm1-xmm0-2*resta1-resta2
 
 			movdqu xmm5, xmm1
 			psrldq xmm5, 2
 			movdqu xmm6, xmm3
 			pslldq xmm6, 7*2
-			paddw xmm5, xmm6
-			paddw xmm4, xmm5
+			paddw xmm5, xmm6  ;xmm5 = [a3.2,..,a3.9] = suma1
+			paddw xmm4, xmm5  ;xmm4 = xmm1-xmm0-2*resta1-resta2+suma1
+			paddw xmm4, xmm5  ;xmm4 = xmm1-xmm0-2*resta1-resta2+2*suma1
 
 			movdqu xmm5, xmm1
 			psrldq xmm5, 4
 			movdqu xmm6, xmm3
 			pslldq xmm6, 6*2
-			paddw xmm5, xmm6
-			paddw xmm4, xmm5
-
-			pxor xmm0, xmm0
-			psubw xmm0, xmm2
-			paddw xmm0, xmm3
-			psrldq xmm2, 2
-			psubw xmm0, xmm2
-			psrldq xmm3, 2
-			paddw xmm0, xmm3
-			psrldq xmm2, 2
-			psubw xmm0, xmm2
-			psrldq xmm3, 2
-			paddw xmm0, xmm3
+			paddw xmm5, xmm6  ;xmm5 = [a3.3,..,a3.10] = suma2
+			paddw xmm4, xmm5  ;xmm4 = xmm1-xmm0-2*resta1-resta2+2*suma1+suma2
+			;ahora los 6 bytes de la parte alta (de 8)
+			pxor xmm0, xmm0  
+			psubw xmm0, xmm2  ;xmm0 = -xmm2
+			paddw xmm0, xmm3  ;xmm0 = -xmm2+xmm3
+			psrldq xmm2, 2    ;xmm2 = xmm2>>2B = resta1
+			psubw xmm0, xmm2  ;xmm0 = -xmm2+xmm3-resta1
+			psubw xmm0, xmm2  ;xmm0 = -xmm2+xmm3-2*resta1
+			psrldq xmm3, 2    ;xmm3 = xmm3>>2B = suma1
+			paddw xmm0, xmm3  ;xmm0 = -xmm2+xmm3-2*resta1+suma1
+			paddw xmm0, xmm3  ;xmm0 = -xmm2+xmm3-2*resta1+2*suma1
+			psrldq xmm2, 2    ;xmm0 = xmm0>>2B = resta2
+			psubw xmm0, xmm2  ;xmm0 = -xmm2+xmm3-2*resta1+2*suma1-resta2
+			psrldq xmm3, 2    ;xmm3 = xmm3>>2B = suma2
+			paddw xmm0, xmm3  ;xmm0 = -xmm2+xmm3-2*resta1+2*suma1-resta2
 			packuswb xmm4, xmm0
+			;ahora en xmm4 queda los 14 importantes, que son los que se ponene en Y
 
 			movdqu xmm5, [edi+edx]
 			paddusb xmm4, xmm5
 			movdqu [edi+edx], xmm4
         pasarY:
-
-		add edx, 14
-		cmp edx, ebx
+		add edx, 14	;se mueve 14 pixeles mas a la derecha
+		cmp edx, ebx	;y ve si tiene que salir del ciclo
 		jl cicloC
 
 	;aca sigue cicloF
-    mov BYTE [edi+ebx-1], 0
+	mov BYTE [edi+ebx-1], 0 ;pone en la ultimo pixel de cada fila negro
 	add esi, ebx 	;primer fila de la siguiente columna del src
 	add edi, ebx	;primer fila de la siguiente columna del dst
-	inc ecx
-	cmp ecx, HEIGHT
+	inc ecx		;aumenta una fila
+	cmp ecx, HEIGHT ;y ve si tiene que salir
 	jne cicloF
 
 fin:
