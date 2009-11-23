@@ -3,7 +3,7 @@ def_graphic_ext=
 img_extIsRegExp=false
 img_extensions=.eps .jpg .jpeg .png .pdf .ps .fig .gif
 kileprversion=2
-kileversion=2.1 beta2
+kileversion=2.1
 lastDocument=desarrollo.tex
 masterDocument=
 name=informe_tp2
@@ -22,15 +22,15 @@ column=0
 encoding=UTF-8
 highlight=LaTeX
 line=2
-open=true
+open=false
 order=4
 
 [item:desarrollo.tex]
 archive=true
-column=288
+column=507
 encoding=UTF-8
 highlight=LaTeX
-line=60
+line=182
 open=true
 order=1
 
@@ -40,7 +40,7 @@ column=26
 encoding=UTF-8
 highlight=LaTeX
 line=33
-open=true
+open=false
 order=5
 
 [item:informe_tp2.kilepr]
@@ -58,7 +58,7 @@ column=0
 encoding=UTF-8
 highlight=LaTeX
 line=22
-open=true
+open=false
 order=2
 
 [item:main.tex]
@@ -66,7 +66,7 @@ archive=true
 column=0
 encoding=UTF-8
 highlight=LaTeX
-line=94
+line=120
 open=true
 order=0
 
@@ -76,5 +76,5 @@ column=7
 encoding=UTF-8
 highlight=LaTeX
 line=17
-open=true
+open=false
 order=3

@@ -21,7 +21,7 @@ Utilizamos la biblioteca \textbf{OpenCV} para manejar las imágenes convenientem
 \subsection{Implementación}
 
 %esto serían observaciones generales
-% Respecto del procesamiento de datos en paralelo via-SIMD lo que se hizo fue procesar los pixeles de las imágenes de la siguiente forma. Por un lado sabemos que la imagen tiene un ancho múltiplo de 16 pixeles lo cual facilita el \emph{fetch} de los mismos a los registros \texttt{xmm}. Además tenemos en cuenta que la imagen es de 8 bits en escala de grises, es decir, cada pixel es un número de 1 byte que según la intensidad oscila en valores enteros entre 0 y 255. 
+% Respecto del procesamiento de datos en paralelo vía-SIMD lo que se hizo fue procesar los pixeles de las imágenes de la siguiente forma. Por un lado sabemos que la imagen tiene un ancho múltiplo de 16 pixeles lo cual facilita el \emph{fetch} de los mismos a los registros \texttt{xmm}. Además tenemos en cuenta que la imagen es de 8 bits en escala de grises, es decir, cada pixel es un número de 1 byte que según la intensidad oscila en valores enteros entre 0 y 255. 
 % 
 % Cada registro \texttt{xmm} tiene 128 bits de ancho, o lo que es igual, 16 bytes. Como el ancho de la imagen tiene las características mencionadas anteriormente, esto nos permite visualizar a la imagen en algo de $n$ columnas de 16 bytes de ancho, justamente el ancho de los registros y $n$ es un número entero cosa que nos permite en $n$ viajes a memoria cargar toda una fila en los registros y poder operar con ella convenientemente.
 % 
@@ -49,14 +49,14 @@ $\begin{pmatrix}
 \end{minipage}
 \end{center}
 
-En este caso si la convolución se hace al $a_{11}$ con la matriz de Roberts quedaría: $a_{11} = a_{22} - a_{21}$ que en nuesto caso se resume a...
+En este caso si la convolución se hace al $a_{11}$ con la matriz de Roberts quedaría: $a_{11} = a_{22} - a_{21}$ que en nuestro caso se resume a...
 
 Entonces para que en las restas de números no se pierda información en el medio lo que se hace es lo siguiente: traemos los bytes pero luego los desempaquetamos como \emph{words} de forma tal de no perder información con las restas. Luego los empaquetamos saturados para grabarlos en la imagen destino convenientemente. 
 
 \pagebreak
 Gráficamente sería algo como: 
 
-\includegraphics[scale=0.55]{/home/connor/Escritorio/fetch.pdf}
+% \includegraphics[scale=0.55]{/home/connor/Escritorio/fetch.pdf}
 
 Sin embargo, estas observaciones valen en caso que la operatoria se haga con valores enteros. Para el caso de Frei-Chen que tiene un $\sqrt{2}$ en la matriz esto deja de ser cierto ya que en ese caso, se opera directamente con números reales representados con precisión simple de 32-bits.
 
@@ -134,6 +134,30 @@ $\begin{pmatrix}
 \end{minipage}
 \end{center}
 
+Como podemos ver, en el caso del operador de Prewitt consta, tanto para X como para Y, de matrices de $3x3$ toda de números naturales, así que podemos trabajar con operaciones sobre enteros. Utilizamos, para realizar este operación, los registros registros simd, para poder procesar en paralelo. Intentamos ir procesando de la máxima cantidad de pixeles posibles, así que terminamos realizando un algoritmo que llega a procesar de a 14 pixeles en paralelo, el cual se detalla a continuación.
+
+Como la matriz de convolución es de $3x3$ y el valor a calcular es el del centro de la misma, lo primero que notamos es que todos los bordes de la imagen no se van a poder calcular, así que lo que se hace es poner 'a mano' un 0 en sus respectivas posiciones. Otro punto a tener en cuenta es que, como se comentó anteriormente, a pesar de poder levantar de a 16 bytes, las operaciones se realizan sobre word, así que en principio vamos a tener el doble de registros ocupados que la cantidad que levantamos.
+
+La idea del algoritmo en si es, principalmente, recorrer toda la imagen fuente e ir guardando los resultados en la imagen destino. Para esto cabe destacar que la primer fila entera, se saltea y se pone todo en 0(negro) y lo mismo hacemos con la ultima fila. En cuanto el ciclo que se realiza, lo que hacemos es tener un bucle anidado, que simulan el recorrido de de la imagen en sobre cada fila y, para cada fila, sobre las columna.
+Dentro del bucle de las columnas, se aplica la convolución sobre x y sobre y, como se explica a continuación.
+
+\begin{itemize}
+\item Mascara X: Para esta mascara, lo que hacemos es en en donde estamos parado, que es el valor centrar del primer pixel a calcular, tomamos la los 16 pixeles de la fila de arriba, la actual y la de abajo, desplazados 1 a la izquierda, ya que ese dato es necesario para calcular los pixeles. Una vez que se tienen estas 3 lineas cargadas de 16 bytes cada una, se pasan a 6 lineas de 8 words cada una, para así poder hacer los cálculos sin perder precisión. De esta forma, y  para reducir significativamente los accesos a memoria, utilizamos 6 de los 8 registros xmm para guardar datos, con lo cual debemos adaptar el algoritmo para que se puedan hacer las cuentas con dos registros. Esta mascara esta dividida en dos partes
+  \begin{itemize}
+    \item Los 8 primeros pixeles: para poder calcular estos pixeles lo que hicimos es, utilizando los tres registros xmm que contienen estos pixeles, primero hacemos las tres restas, que esto es restar los tres registros así como están (ie. $res=-a1-a2-a3$) y luego, para poder realizar las sumas, despasamos cada registro en dos posiciones, poniendo donde estaba el primer pixel, el tercero, el segundo el cuarto, etc.
+    De esta manera, quedan las ultimas dos posiciones libres, las cuales se completan con los dos primeros pixeles de la parte alta. Una vez que se tiene esto, se suman al resultando anterior. 
+    \item Los 8 últimos pixeles: de estos pixeles los que vamos a calcular son las primeras 6 posiciones, para esto primero hacemos la resta igual con en el item anterior, y después lo que hacemos es desplazar cada registro dos pixeles, para poder hacer la suma correspondiente. Si es como obtenemos 6 valores calculados. 
+  \end{itemize}
+Por ultimo lo que hacemos es poner todos estos pixeles un un solo registro, saturando a byte sin signo, y por ultimo moverlos a la posición correspondiente en la imagen destino.
+\item Máscara Y: Para esta mascara, solamente necesitamos la linea de arriba y la de abajo del pixel actual. Si que cargamos las dos lineas y dividimos en 4 de 8 words cada una. Nuevamente dividimos esta parte en dos
+  \begin{itemize}
+    \item Los 8 primeros pixeles: Lo que hacemos acá es sumar y restar los registros correspondientes, 3 veces pero en cada paso vamos desplazando cada registro para sacar el pixel en la primer posición, y poniendo en la ultima posición el primer pixel del registro que contiene a los 8 posteriores.
+    \item Los 8 últimos pixeles: en este paso se realiza los mimos pasos que en los primeros 8, con la salvedad que no se rellena en cada desplazamiento, ya que solo necesitamos los primeros 6 pixeles.
+  \end{itemize}
+  Una vez hecho esto, se procede a unir los resultados, saturando sin signo para que queden valores entre 0 y 255. Para terminar, lo que se hacer es levantar los valores guardaos con la mascara x, sumarlos al actual y volverlos a guardar.
+\end{itemize}
+Ya habiendo calculado estos pixeles, lo que se hace es avanzar el iterador de la columna unas 14 posiciones, e iterar hasta que nos pasemos del ancho de la imagen.
+
 \subsubsection{Operador de Sobel}
 
 Matrices de Sobel en $x$ e $y$
@@ -155,6 +179,8 @@ $\begin{pmatrix}
 \end{pmatrix}$
 \end{minipage}
 \end{center}
+
+En esta parte no vamos a detallar mucho, ya que es muy similar a la forma de calcular Prewitt, las únicas diferencias a destacar son, que para poder ver si se debe hacer en realizar la mascara de X o la de Y, se va preguntando, basado en los parámetros XOrder e YOrder, si hay que entrar en ese calculo, o si hay que saltarlo. Y por otro lado, la otra modificación es que se suma o resta dos veces (en lugar de una) en los lugares correspondiente para que cumpla con la matriz de convolución correspondiente. Salvando estas diferencias, el método es casi igual al de Prewitt y es por eso que no se entra en detalle.
 
 \subsubsection{Operador de Frei-Chen}
 
