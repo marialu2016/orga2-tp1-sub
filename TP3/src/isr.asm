@@ -181,13 +181,11 @@ _isr32:
     jne pasarAPintor    
     pasarATraductor:
     	mov BYTE [isrTarea], 0x1
-    	xchg bx, bx
         jmp 0x30:0
         sti
         iret
     pasarAPintor:
     	mov BYTE [isrTarea], 0x0
-    	xchg bx, bx
         jmp 0x28:0
         sti
         iret
