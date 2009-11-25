@@ -1,9 +1,193 @@
 %acá ponemos los ejercicios?
 \section{Ejercicio 1}
 
+% \subsection{Paso a modo protegido}
+A pesar que Bochs lo tenga habilitado, fue necesario habilitar el gate A20 para poder direccionar a toda la memoria del sistema.
+
+
+Además se deshabilitaron las interrupciones del procesador mediante la instrucción \texttt{cli} para evitar que el curso de ejecución sea interrumpido de forma errónea ya que en este momento del programa las tablas de interrupciones (IDT) no han sido cargadas y por lo tanto, de llegar una interrupción el sistema se trula. %% OJO!
+
+Por otro lado utilizamos una \texttt{struct} en C para cargar los descriptores de la GDT según correspondían con lo pedido en la consigna. Recordemos que la GDT es una tabla que tiene descriptores de segmento, de tareas y de interrupciones.\footnote{Para ver en detalle como se llenó la struct ver el archivo adjunto gdt.c}
+
+De esta forma, se cargaron los descriptores de segmento de memoria de la siguiente manera de acuerdo a lo requerido por Intel como así también la presencia de un descriptor de segmento nulo al inicio de la tabla.
+
+%acá va la imagen del descriptor de segmento de memoria
+
+Basado en esta definción y en lo pedido en el ejercicio se tiene la siguiente tabla de descriptores de segmento:
+
+\begin{center}
+\begin{tabular}{|c|c|c|}
+\hline
+ID & Pos. en memoria & Descripción\\
+\hline
+1 & 0x0 & Descriptor Nulo \\
+2 & 0x8 & Código \\
+3 & 0x10 & Dato \\
+4 & 0x18 & Memoria de Video \\
+\hline
+\end{tabular}
+\end{center}
+
+A continuación describimos los aspectos más relevantes de los descriptores anteriores.
+
+\begin{enumerate}
+\item Descriptor nulo. Este descriptor es requerido por Intel. La idea de este descriptor es que en caso de que la tabla no esté correctamente definida, su sola presencia al inicio, hace saltar una excepción. %OJO!
+
+\item Descriptor de segmento de código: es un segmento de nivel 0 (DPL = 0). Tiene un límite (máximo offset que se le puede sumar a la base) de 0xfffff que con la granularidad en 4 kbytes, (G = 1) dan los 4 gigabytes disponibles en la memoria del sistema. ya que la base del mismo está en la dirección 0.
+
+\item Descriptor de segmento de datos: este segmento es casi igual al descrito anteriormente exceptuando el tipo (TYPE = 2, en vez de ser TYPE = A).
+
+\item Descriptor del segmento de la memoria de video: este es un segmento de datos parecido al anterior exceptuando el límite y la base (que son 0x0f9f y 0xb8000 respectivamente) que permiten direccionar únicamente a la memoria de video. Además para poder lograr esto, la granularidad del mismo es a byte (G = 0). También como los anteriores tiene nivel de privilegio cero (DPL = 0).
+\end{enumerate}
+
+Tras deshabilitar las interrupciones, cargamos la tabla anterior mediante la instrucción \texttt{lgdt} que guarda el descriptor de la gdt en el registro \texttt{gdtr}.
+
+Una vez concluído este paso, se procede a habilitar el bit \texttt{PE} del registro de control \texttt{CR0} mediante:
+
+\begin{verbatim}
+	mov     eax, cr0
+	or      eax, 01h
+	mov     cr0, eax
+\end{verbatim}
+
+El último paso para completar la transición a modo protegido consiste en settear el registro \texttt{CS} (Code Segment) a la posición que se le asignó al mismo en la GDT, paso se realiza mediante la ejecución de un jump far de las siguientes características: 
+\verb= jmp posición_en_gdt_segmento_código : punto_a_continuar=
+
+En nuestro caso, 
+\verb= jmp 0x08:modoprotegido =
+
+Una vez ya en modo protegido, se procedió a inicializar con valores correctos los demás registros de segmento. En esta oportunidad setteamos a \texttt{ES} como un puntero al segmento de la memoria de video, y el resto de los registros de forma tal de apuntar al segmento de datos. 
+
+\begin{verbatim}
+;Apuntamos 'es' a la memoria de video y los demas al segmento de datos
+	mov ax, 0x10    ; segmento de datos
+	mov bx, 0x18    ; memoria de video
+	mov ds, ax
+	mov fs, ax
+	mov gs, ax
+	mov ss, ax
+	mov es, bx    ; es apunta a la memoria de video
+
+\end{verbatim}
+
+En último lugar, para el ítem que pide dibujar un recuadro del tamaño de la pantalla, se utilizó el segmento definido que comprende a la memoria de video (ES). Se la recorrió de forma tal de dibujar un caracter (una carita feliz) en los bordes mediante el siguiente código:
+
+\begin{verbatim}
+    ; Pintamos de negro la pantalla
+            mov ecx, 80*25    ;toda la pantalla
+            xor esi, esi
+
+            mov ax, 0x0000    ; negro, ningun caracter
+
+            cleanPantalla:
+                mov [es:esi], ax
+                add esi, 2    ; avanza al siguiente caracter
+            loop cleanPantalla
+
+            ; Dibujamos bordes horizontales
+            mov ah, 0x0F        ; blanco brillante, fondo negro
+            mov al, 0x02        ; caracter carita
+            xor esi, esi
+            mov edi, 80*24*2
+            mov ecx, 80
+            bordeHor:
+                mov [es:esi], ax
+                mov [es:edi], ax
+                add esi, 2
+                add edi, 2
+            loop bordeHor
+
+            ; Dibujamos bordes verticales
+            xor esi, esi
+            mov edi, 79*2
+            mov ecx, 25
+            bordeVer:
+                mov [es:esi], ax
+                mov [es:edi], ax
+                add esi, 80*2
+                add edi, 80*2
+            loop bordeVer
+
+ 
+\end{verbatim}
+
 \section{Ejercicio 2}
+
+En este ejercicio se nos pide configurar y habilitar el modo de paginación para estos procesadores IA-32. El mismo nos permite ver a la memoria como un conjunto de páginas de tamaño fijo. %explicamos más?
+
+Esto se hizo de la siguiente manera. Se definieron los directorios de páginas (cada directorio contiene hasta 1024 selectores de tablas de página que a su vez pueden contener 1024 páginas propiamente dichas). 
+
+En nuesto caso, definimos dos directorios de tablas de páginas (uno por cada tarea) y además en cada directorio, una única tabla de páginas. Esto se realiza de esta forma para cumplir con el mapa de memoria solicitado.
+
+Se empieza a ejecutar el siguiente pseudo-código\footnote{el código real de la siguiente rutina está en el archivo \texttt{paging.asm}} a partir de la dirección 0xA000 (d...)
+
+\pagebreak
+
+\begin{verbatim}
+;defino directorio pintor (0xA000)
+dirección_primera_tabla OR 3 ; pone los flags: read/write y present en 1
+for(i = 1; I<1024; i++)
+	tabla_nula	; no se utilizan, se ponen en cero
+
+;defino dir traductor (0xB000)
+dirección_primera_tabla OR 3 ; pone los flags: read/write y present en 1
+for(i = 1; I<1024; i++)
+	tabla_nula	; no se utilizan, se ponen en cero
+
+;tabla_pintor(0xC000)
+;	(...) para cada valor en esta tabla cumpliendo con el mapa de memoria de la tarea
+;	se lo asigno a donde corresponde o se escribió cero de forma tal de no poder ser accedido
+;tabla_traductor (0xD000)
+;	(misma observación que para la tabla anterior)
+\end{verbatim}
+
+
+Vale aclarar que en los casos en el que la memoria esté mapeada se settean los primeros dos bits de forma tal de que la página en cuestión sea de tipo \emph{read/write - present}.
+
+Una vez cargados los directorios y las tablas de páginas correspondientes con las instrucciones...
+\begin{verbatim}
+mov eax, 0xA000 
+mov cr3, eax	; se cr3 -> dirección del dir. de página
+\end{verbatim}
+
+...se procede a habilitar el modo de paginación mediante la rutina:
+\begin{verbatim}
+mov eax, cr0
+or eax, 0x80000000 	; se setta el bit de paginación en cr0
+mov cr0, eax
+\end{verbatim}
+
+Luego para el inciso b) del ejercicio en cuestión es escribir en la memoria de video pero utilizando el sistema de paginación recientemente habilitado. Esto se realiza mediante la posición de memoria 0x13000 que ha sido mapeada en ambos directorios de páginas a la memoria de video. El algoritmo empleado es una típica rutina de escritura en memoria de un string, en este caso el mensaje ``Orga2 SUB''. 
+
+\begin{verbatim}
+
+; 2b - Escribir "Orga2   SUB!!!" en la pantalla
+mov     ecx, mensaje_len
+
+; Usamos 0x13000 porque apunta a la memoria de video
+; escribimos desde la posicion (1,1) (segunda fila y columna)
+mov     edi, 0x13000 + 80 * 2 + 2   
+
+ ; letras verdes, fondo azul
+mov     ah, 0x1A
+mov     esi, mensaje
+
+.ciclo:
+	mov al, [esi]
+	mov [edi], ax
+	inc esi
+	add edi, 2
+loop .ciclo
+
+jmp fin_mensaje
+mensaje: db "Orga 2   SUB!!!"
+mensaje_len equ $ - mensaje
+fin_mensaje:
+
+\end{verbatim}
+
 
 \section{Ejercicio 3}
 
-\section{Ejercicio 4}
 
+\section{Ejercicio 4}
