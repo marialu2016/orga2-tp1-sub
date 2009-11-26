@@ -23,17 +23,18 @@ global simdFreichen
 ; Macro LOAD.
 ;
 ; Recibe dos registros xmm como parámetros y carga en ellos una fila de 8px de
-; la imagen fuente como SP floats, cuatro en cada uno.
+; la imagen fuente como SP floats (cuatro en cada uno) desde [esi + edx].
 ;
 %macro LOAD 2
     
     ; %1 = [ | | | | | | | |0|1|2|3|4|5|6|7] (enteros 8-bit sin signo)
     movq %1, [esi + edx]
     
-    ; %1 = [ 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 ] (enteros 16-bit con o sin signo)
+    ; %1 = [ 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 ] (enteros 16-bit con o sin signo, pues valen entre 0 y 255)
     punpcklbw %1, XMM_ZERO              
     
-    movdqu %2, %1                       ; %2 = %1
+    ; %2 = %1
+    movdqu %2, %1
     
     ; %1 = [   0   |   1   |   2   |   3   ] (enteros 32-bit con o sin signo)
     punpcklwd %1, XMM_ZERO              
@@ -67,7 +68,7 @@ simdFreichen:
     ;;; Inicialización
     ;;;
     
-    mov ebx, WIDTH_AUX        ; ebx = WIDTH
+    mov WIDTH, WIDTH_AUX ; ebx = WIDTH
 
     mov esi, SRC         ; esi apunta a la fila actual de src, donde se empieza a leer
     mov edi, DST         
@@ -110,9 +111,13 @@ simdFreichen:
             ;;;
             ;;; Derivada en X
             ;;;
+            ; xmm5 contiene de la iteración anterior los valores de las dos
+            ; columnas anteriores comprimidas en X y en Y
+            ; xmm5 = [ (-1)x |  (0)x | (-1)y |  (0)y ]
+            
             
             LOAD xmm0, xmm1                     ; carga primera fila en xmm0:xmm1
-            add esi, WIDTH          
+            add esi, WIDTH                      ; avanza de fila
             LOAD xmm2, xmm3                     ; carga segunda fila en xmm2:xmm3
             
             mulps xmm2, XMM_SQR2                ; 
@@ -125,7 +130,7 @@ simdFreichen:
             LOAD xmm2, xmm3                     ; carga tercera fila en xmm2:xmm3
             
             sub esi, WIDTH                      ;
-            sub esi, WIDTH                      ; retroceden las filas avanzadas
+            sub esi, WIDTH                      ; retrocede las filas avanzadas
             
             addps xmm0, xmm2                    ;
             addps xmm1, xmm3                    ; suma tercera fila al resultado acumulado
@@ -136,9 +141,11 @@ simdFreichen:
             
             ; xmm0 = [  (1)  |  (2)  |  (3)  |  (4)  ] 
             ; xmm1 = [  (5)  |  (6)  |  (7)  |  (8)  ]
-            ; xmm5 = [ (-1)  |  (0)  | (-1)y |  (0)y ]    (de la iteración anterior)
+            ; xmm5 = [ (-1)  |  (0)  | (-1)y |  (0)y ]    (xmm5 de la iteración anterior)
             
-            ; Guarda en xmm2 los futuros valores de xmm5 para la próxima iteración
+            ; Guarda en xmm2 los futuros valores de xmm5 para la próxima iteración.
+            ; Como se ve salva las derivadas en Y y actualiza las derivadas en X
+            ; con los nuevos valores, (7) y (8) (que luego serán (-1) y (0)).
             movdqu xmm2, xmm1                   ; xmm2 = [  (5)  |  (6)  |  (7)  |  (8)  ]
             shufps xmm2, xmm5, 11101110b        ; xmm2 = [  (7)  |  (8)  | (-1)y |  (0)y ]
             
@@ -176,7 +183,7 @@ simdFreichen:
             LOAD xmm2, xmm3                     ; carga tercera fila en xmm2:xmm3
             
             sub esi, WIDTH                      ;
-            sub esi, WIDTH                      ; retroceden las filas avanzadas
+            sub esi, WIDTH                      ; retrocede las filas avanzadas
             
             subps xmm2, xmm0
             subps xmm3, xmm1                    ; deja en xmm2:xmm3 la diferencia entre las filas
@@ -222,7 +229,7 @@ simdFreichen:
             
             pmaxsw xmm0, XMM_ZERO               ;
             pmaxsw xmm4, XMM_ZERO               ; satura las derivadas a cero
-            
+                        
             paddw xmm0, xmm4                    ; suma las derivadas
             
             packuswb xmm0, XMM_ZERO             ; pasa los valores a bytes y satura a 0 y 255
@@ -253,3 +260,4 @@ simdFreichen:
     xor eax, eax
 
 ret
+

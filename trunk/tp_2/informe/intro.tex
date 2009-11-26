@@ -1,31 +1,48 @@
 \section{Introducción}
 
-La detección de bordes en una imagen consiste en hallar las zonas de la misma en donde el color cambia "abruptamente". Esta herramienta es utilizada tanto para compresión de archivos como para lograr efectos sobre las imágenes.
+En la primera entrega de este trabajo hicimos un programa que toma imágenes como
+entrada y genera nuevas imágenes efectuando sobre la primera un proceso conocido
+como \emph{convolución}. La convolución es una técnica de detección de bordes, y
+el resultado es una imagen oscura del mismo tamaño que la original, con zonas
+claras donde la imagen fuente tiene ``saltos de intesidad''.
+
+La detección de bordes en imágenes es una técnica utilizada tanto para compresión
+de archivos como para lograr efectos gráficos. La convolución consiste en recorrer
+los pixeles de la imagen (en nuestro caso en escala de grises) y aplicar en cada
+punto un operador de derivación, que es una matriz de números cuyo producto
+interno con el entorno del punto mide la variación de la intensidad en alguna
+dirección.
+
+Existen muchas matrices utilizadas para la convolución, con diferentes
+dimensiones y coeficientes. En la primera entrega nuestro trabajo fue realizar
+implementaciones de convolución para las matrices de Roberts (de 2x2), y de
+Prewitt y Sobel (de 3x3). La implementación fue realizada en assembler, para la
+arquitectura IA-32 básica, es decir usando los registros de propósito general.
+
+Para esta segunda y última parte la tarea consiste en realizar nuevas 
+implementaciones aprovechando las nuevas tecnología SIMD: las extensiones MMX,
+SSE, SSE2 y SSE3.
+
+Estas extensiones se fueron agregando a los procesadores Intel de forma gradual
+(y en ese orden), por lo que algunas computadoras pueden no soportarlas todas.
+Todas ellas consisten en sets de instrucciones y hardware especializados para el
+procesamiento en paralelo. Los 8 registros \textbf{MMX} de 64 bits y los 8
+\textbf{XMM} de 128 bits se comportan como vectores de varios datos (``empaquetados'')
+que pueden operarse ``verticalmente'', es decir que entre dos registros se realiza
+cada operación elemento a elemento.
+
+Esta tecnología es especialmente útil cuando se necesitan realizar cálculos
+sencillos (pues disponemos de pocos registros) de manera repetitiva a lo largo 
+de grandes cantidades de datos ``alineados''. Esto es ideal (y está pensado para)
+el tratamiento de señales digitales como imágenes y sonidos.
+
+En esta segunda parte rehicimos las implementaciones del primer trabajo y
+agregamos una nueva: el operador de Frei-chen, que requiere a diferencia de los
+otros un procesamiento en punto flotante. En todos los casos lo hicimos con los
+8 registros XMM presentes desde la extensión SSE.
+
+A continuación describiremos el trabajo realizado sin profundizar en las
+cuestiones ya analizadas en la parte anterior, sino enfocándonos principalmente
+en el nuevo mundo del cálculo en paralelo.
 
 
-Una manera simple y muy útil de detectar bordes es calculando cómo varía la intensidad o luminosidad de una imagen entorno a cada uno de sus pixeles. Esto se logra tomando la imagen en escala de grises y aplicando en cada punto un operador de derivación, que es una matriz de números cuyo producto interno con el entorno del punto mide la variación de la intensidad en alguna dirección. Esta técnica se llama \textbf{convolución}.
-
-Existen muchas matrices utilizadas para la convolución, con diferentes dimensiones y coeficientes. Las de mayores dimensiones proveen una detección más suave y menos precisa en la que se reducen los efectos del "ruido".
-
-%%
-En el presente trabajo realizamos una implementación de los operadores de Roberts, Prewitt, Sobel y Frei-Chen en el lenguaje ensamblador correspondiente a la arquitectura IA-32. La misma contiene los algoritmos resueltos utilizando instrucciones de propósito general y cuenta además con las versiones de los mismos pero aplicando instrucciones específicas para procesamiento paralelo (SIMD).
-
-Respecto de la técnica SIMD \emph{(Single Instruction, Multiple Data)}, esta consiste en realizar operaciones a un vector de varios elementos de forma atómica, logrando esto mediante instrucciones y hardware especializado. De esta manera, se logra paralelizar a la hora de procesar información ya que como veremos más adelante, se puede llevar a cabo el cómputo de varios puntos de una imagen en un mismo paso, cosa que usando los registros de propósito general esto quedaba limitado a procesar de a uno por vez. 
-
-Como ventajas de este método nos gustaría destacar la capacidad del procesamiento paralelo que permite optimizar notablemente aplicaciones multimedia y de procesamiento de señales digitales. Si bien esto parece ser un gran y positivo cambio, cabe destacar que no todos los algoritmos son paralelizables en este sentido. Otro inconveniente importante es que el soporte para instrucciones SIMD en la arquitectura IA-32 se fue dando en forma progresiva ya que con el correr del tiempo se fueron agregando nuevas instrucciones. El problema que esto presenta es que al usar una determinada instrucción uno tiene que ver si ese procesador soporta esa instrucción en particular, lo cual, nuevamente, hace muy restrictivo y poco ``portable'' a los programas que utilizan SIMD.
-
-En particular y para este trabajo, utilizamos instrucciones SIMD de la arquitectura IA-32 de Intel correspondientes a los subconjuntos de instrucciones denominados MMX, SSE1, SSE2 y SSE3. Consecuentemente, es requisito contar con un procesador de la familia Intel y similar que tenga soporte para estas instrucciones. 
-
-A continuación, describiremos brevemente el programa realizado, discutiremos las cuestiones surgidas durante su desarrollo y expondremos los resultados y conclusiones extraídos.
-
-
-
-
-
-
-%prueba
-% \begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|}
-% \hline
-% $x_0$ & $x_1$  & $x_2$ & $x_3$ & $x_4$ & $x_5$  & $x_6$ & $x_7$ & $x_8$ & $x_2$  & $x_3$ & $x_4$ & $x_1$ & $x_2$  & $x_3$ & $x_4$\\
-% \hline
-% \end{tabular}
