@@ -1,6 +1,6 @@
 \section{Apéndice A: Manual de usuario}
 
-El programa realizado permite aplicar diferentes implementaciones de detección de bordes a imágenes. Tanto el nombre de las imagen fuente como los operadores se indican por línea de comandos de la siguiente manera (suponiendo que el ejecutable está en "exe/bordes"):
+El programa realizado permite aplicar diferentes implementaciones de detección de bordes a imágenes. Tanto el nombre de las imagen fuente como los operadores se indican por línea de comandos de la siguiente manera (suponiendo que el ejecutable está en ``exe/bordes''):
 
 
    {\small \verb=$ exe/bordes {fuente} {destino} {operadores} =}
@@ -17,31 +17,45 @@ Donde:
 
 {\small
 \begin{verbatim}    
-     CLAVE | OPERADOR  | DIRECCION |     IMPLEMENTACIÓN      |      SUFIJO
-    -------+-----------+-----------+-------------------------+---------------------
-      r1   |  Roberts  |    XY     |       Ensamblador       |   _asm_roberts
-      r2   |  Prewitt  |    XY     |          ""             |   _asm_prewitt
-      r3   |   Sobel   |    X      |          ""             |   _asm_sobelX
-      r4   |   Sobel   |    Y      |          ""             |   _asm_sobelY
-      r5   |   Sobel   |    XY     |          ""             |   _asm_sobelXY
-           |           |           |                         |
-      cv3  |   Sobel   |    X      |        OpenCV           |    _cv_sobelX
-      cv4  |   Sobel   |    Y      |          ""             |    _cv_sobelY
-      cv5  |   Sobel   |    XY     |          ""             |    _cv_sobelXY
-           |           |           |                         |
-      c3   |   Sobel   |    X      |          C              |    _c_sobelX
-      c4   |   Sobel   |    Y      |          ""             |    _c_sobelY
-      c5   |   Sobel   |    XY     |          ""             |    _c_sobelXY
-           |           |           |                         |
-     push  |  Roberts  |    X      | Ensamblador usando pila | _asm_roberts(push)
-           |           |           |                         |
-      byn  |   Escala de grises    |                         |      _byn
+                                                                      
+    USO:    ./bordes $src $dest ${lista de operadores}                
+                                                                      
+    - $src: nombre del archivo de origen                              
+    - $dest: nombre del archivo de salida SIN EXTENSIÓN               
+    - ${lista de operadores}: una o más de las siguientes claves:     
+                                                                      
+             CLAVE | OPERADOR  | DIRECCION | IMPLEMENTACIÓN           
+            -------+-----------+-----------+----------------          
+              r1   |  Roberts  |    XY     |  asm + sse               
+              r2   |  Prewitt  |    XY     |      "                  
+              r3   |   Sobel   |    X      |      "                  
+              r4   |   Sobel   |    Y      |      "                  
+              r5   |   Sobel   |    XY     |      "                  
+              r6   | Frei-chen |    XY     |      "                  
+                   |           |           |                          
+              a1   |  Roberts  |    XY     |asm g. purpose            
+              a2   |  Prewitt  |    XY     |      "                  
+              a3   |   Sobel   |    X      |      "                  
+              a4   |   Sobel   |    Y      |      "                  
+              a5   |   Sobel   |    XY     |      "                  
+                   |           |           |                          
+              cv3  |   Sobel   |    X      |    OpenCV                
+              cv4  |   Sobel   |    Y      |      "                  
+              cv5  |   Sobel   |    XY     |      "                  
+                   |           |           |                          
+            c1...c6|   (idem)  |   (idem)  |      C                   
+                   |           |           |                          
+              byn  |   Escala de grises    |                          
+                   |           |           |                          
+     El programa generará una imagen por cada operador solicitado. El 
+ nombre de los archivos de salida será $dest más un guión bajo más el 
+ operador utilizado más la extensión (obtenida del archivo fuente).   
 \end{verbatim}  }                                        
 
 Por ejemplo, si tenemos el ejecutable en \verb="exe/bordes"= y una imagen en \verb="pics/lena.bmp"=, llamando al programa como
 
-{\small \verb=  $ exe/bordes pics/lena.bmp pics/lena byn r1 r2 r3 r4 r5 cv3 cv4 cv5 c3 c4 c5 push =}
+{\small \verb=  $ exe/bordes pics/lena.bmp pics/lena byn r6 =}
 
-se aplicarán todas las implementaciones disponibles y se generarán los archivos \verb="pics/lena_asm_roberts.bmp", "pics/lena_asm_prewitt.bmp"=, etc... Además el programa mostrará por salida estándar la cantidad aproximada de clocks de procesador insumida por cada implementación.
+Se aplicará el operador de Frei-Chen en SIMD y se generará el archivo \verb="pics/lena_r6.bmp" =. Además el programa mostrará por salida estándar la cantidad aproximada de clocks de procesador insumida por cada implementación.
 
     

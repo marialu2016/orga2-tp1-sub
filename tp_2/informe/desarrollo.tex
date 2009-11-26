@@ -68,7 +68,7 @@ Además esto nos evita accesos a memoria, pues en nuestras anteriores implementa
 accedíamos a memoria para consultar el width para saber cuándo terminar el bucle.
 
 El hecho de que el ancho sea múltiplo de 16 también puede aprovecharse para operar
-con los registros \textbf{XMM}, donde caben justamente 16 pixeles (cada uno deuna  un byte).
+con los registros \textbf{XMM}, donde caben justamente 16 pixeles (cada uno de un byte).
 Por ejemplo podemos dividir cada fila en bloques contiguos de 16 pixeles, levantando
 cada bloque de una vez hacia un registro \textbf{XMM}.
 
@@ -184,11 +184,19 @@ Matrices de Sobel:
 
 \begin{center}
 \begin{minipage}{0.30 \textwidth}
-$\begin{pmatrix}-1 & 0 & 1 \\-2 & 0 & 2 \\-1 & 0 & 1 \\\end{pmatrix}$
+$\begin{pmatrix}
+-1 & 0 & 1 \\
+-2 & 0 & 2 \\
+-1 & 0 & 1 \\
+\end{pmatrix}$
 \end{minipage}
 \ \ 
  \begin{minipage}{0.30 \textwidth}
-$\begin{pmatrix}-1 & -2 & -1 \\0 & 0 & 0  \\1 & 2 & 1 \\\end{pmatrix}$
+$\begin{pmatrix}
+-1 & -2 & -1 \\
+0 & 0 & 0  \\
+1 & 2 & 1 \\
+\end{pmatrix}$
 \end{minipage}
 \end{center}
 

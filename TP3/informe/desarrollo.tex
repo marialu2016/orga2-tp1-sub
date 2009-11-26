@@ -1,17 +1,16 @@
-%acá ponemos los ejercicios?
+
 \section{Ejercicio 1}
 
-% \subsection{Paso a modo protegido}
+
 A pesar que Bochs lo tenga habilitado, fue necesario habilitar el gate A20 para poder direccionar a toda la memoria del sistema.
 
 
-Además se deshabilitaron las interrupciones del procesador mediante la instrucción \texttt{cli} para evitar que el curso de ejecución sea interrumpido de forma errónea ya que en este momento del programa las tablas de interrupciones (IDT) no han sido cargadas y por lo tanto, de llegar una interrupción el sistema se trula. %% OJO!
+Además se deshabilitaron las interrupciones del procesador mediante la instrucción \texttt{cli} para evitar que el curso de ejecución sea interrumpido de forma errónea ya que en este momento del programa las tablas de interrupciones (IDT) no han sido cargadas y por lo tanto, de llegar una interrupción el sistema se reinicia en forma no deseada.
 
 Por otro lado utilizamos una \texttt{struct} en C para cargar los descriptores de la GDT según correspondían con lo pedido en la consigna. Recordemos que la GDT es una tabla que tiene descriptores de segmento, de tareas y de interrupciones.\footnote{Para ver en detalle como se llenó la struct ver el archivo adjunto gdt.c}
 
 De esta forma, se cargaron los descriptores de segmento de memoria de la siguiente manera de acuerdo a lo requerido por Intel como así también la presencia de un descriptor de segmento nulo al inicio de la tabla.
 
-%acá va la imagen del descriptor de segmento de memoria
 
 Basado en esta definición y en lo pedido en el ejercicio se tiene la siguiente tabla de descriptores de segmento:
 
@@ -113,7 +112,7 @@ En último lugar, para el ítem que pide dibujar un recuadro del tamaño de la p
 
 \section{Ejercicio 2}
 
-En este ejercicio se nos pide configurar y habilitar el modo de paginación para estos procesadores IA-32. El mismo nos permite ver a la memoria como un conjunto de páginas de tamaño fijo. %explicamos más?
+En este ejercicio se nos pide configurar y habilitar el modo de paginación para estos procesadores IA-32. El mismo nos permite ver a la memoria como un conjunto de páginas de tamaño fijo. 
 
 Esto se hizo de la siguiente manera. Se definieron los directorios de páginas (cada directorio contiene hasta 1024 selectores de tablas de página que a su vez pueden contener 1024 páginas propiamente dichas). 
 

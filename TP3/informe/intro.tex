@@ -1,0 +1,14 @@
+\section{Introducción}
+
+En el presente trabajo práctico relacionado con la programación de sistemas operativos para la arquitectura IA-32, nos dedicaremos a mostrar la realización y el funcionamiento paso a paso de un pequeño \emph{kernel}. Un kernel es una pieza de software que se encarga, de alguna manera, de coordinar el uso de recursos de hardware entre las distintas aplicaciones de software disponibles. Es de cierta forma un puente entre los programas y el hardware de la pc; una especie de columna vertebral del sistema operativo. 
+
+En nuestro caso se implementó un kernel bastante simple para cumplir con los requerimientos del enunciado del trabajo práctico. En la siguiente sección desarrollaremos punto a punto el funcionamiento del mismo, aunque destacaremos ahora los pasos más importantes que este realiza:
+
+\begin{itemize}
+\item Paso de modo real (compatibilidad con el procesador Intel 8086) a modo protegido (Intel 80286 en adelante).
+\item Inicialización y configuración de la \emph{Global Descriptor Table} (GDT). Carga de segmentos de código y datos.
+\item Habilitación de la unidad de paginación de memoria y configuración de la misma para cumplir con lo pedido en el ejercicio.
+\item Carga de las rutinas que manejan las interrupciones del procesador como así, las rutinas que manejan las excepciones del mismo.
+\item Configuración de las \emph{Task State Segment} (TSS) y la subsecuente carga de las mismas a la GDT de manera de poder manejar tareas en el sistema y luego armar la rutina que las intercambia a intervalos regulares.
+\end{itemize}
+
