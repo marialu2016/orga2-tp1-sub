@@ -1,64 +1,113 @@
 \section{Desarrollo}
 
-\subsection{Programa}
+\subsection{El programa}
 
-El programa que hicimos permite aplicar ciertos operadores de derivación a una imagen especificada por línea de comandos. Los operadores implementados son Roberts, Prewitt,  Sobel y Frei-Chen. El primero tiene matrices de 2x2 y detecta bordes en diagonal. Los otros tres tienen matrices de 3x3 y detectan bordes verticales u horizontales. Se pueden invocar tanto las versiones de propósito general para los primeros tres, como las versiones de los operadores que utilizan instrucciones SIMD. 
+El programa realizado es en realidad una extensión del presentado anteriormente.
+Permite aplicar los mismos operadores de derivación que aquella versión: de
+\textbf{Roberts}, \textbf{Prewitt} y \textbf{Sobel} realizados con la arquitectura
+de propósito general y la versión de \emph{OpenCV} del operador de \textbf{Sobel},
+además de las nuevas implementaciones agregadas de \textbf{Roberts}, \textbf{Prewitt},
+\textbf{Sobel} y \textbf{Frei-chen} hechas con la tecnología \emph{SIMD}.
 
-Para cada operador solicitado el programa aplica la matriz correspondiente en X, luego en Y, y finalmente suma los resultados. Para el caso de Sobel, también permite aplicar convolución solamente en X o solamente en Y.
+Para cada operador solicitado el programa aplica la matriz correspondiente en X,
+luego en Y, y finalmente suma los resultados. La imagen resultante es grabada y
+se muestra por pantalla la cantidad aproximada de clocks de procesador insumida.
+Para el caso de Sobel, también permite aplicar convolución solamente en X o
+solamente en Y, tanto en la implementacióne básica como en la optimizada.
 
-Utilizamos la biblioteca \textbf{OpenCV} para manejar las imágenes convenientemente, es decir, dejamos la carga, el guardado de imágenes y el ``aplanado'' a escala de grises a dicha biblioteca. El grupo se limitó a crear una interfaz que contenga lo mencionado y a implementar los algoritmos de los operadores de detección de bordes en lenguaje ensamblador. 
+Utilizamos la biblioteca \textbf{OpenCV} para manejar las imágenes convenientemente,
+es decir, dejamos la carga, el guardado de imágenes y el ``aplanado'' a escala
+de grises a dicha biblioteca.
 
-
-
-
-%%%%%%%%%%%%%%%%%%%
-% Acá en vez de contar todo el chamuyo de como se deriva si de derecha a izquierda o si es mejor 
-% saturar de una forma u otra, creo que sería más productivo y fructífero mencionar los detalles de implementación
-% de los operadores ya que son todos distintos y ya que la magia está en utilizar bien simd para los distintos casos
-% but feel free to edit me - JM.
-%%%%%%%%%%%%%%%%%%%%%
 
 \subsection{Implementación}
 
-%esto serían observaciones generales
-% Respecto del procesamiento de datos en paralelo vía-SIMD lo que se hizo fue procesar los pixeles de las imágenes de la siguiente forma. Por un lado sabemos que la imagen tiene un ancho múltiplo de 16 pixeles lo cual facilita el \emph{fetch} de los mismos a los registros \texttt{xmm}. Además tenemos en cuenta que la imagen es de 8 bits en escala de grises, es decir, cada pixel es un número de 1 byte que según la intensidad oscila en valores enteros entre 0 y 255. 
-% 
-% Cada registro \texttt{xmm} tiene 128 bits de ancho, o lo que es igual, 16 bytes. Como el ancho de la imagen tiene las características mencionadas anteriormente, esto nos permite visualizar a la imagen en algo de $n$ columnas de 16 bytes de ancho, justamente el ancho de los registros y $n$ es un número entero cosa que nos permite en $n$ viajes a memoria cargar toda una fila en los registros y poder operar con ella convenientemente.
-% 
-% Esto es muy interesante porque antes se hacían $k$ accesos a memoria (donde $k$ es el ancho en pixeles de la imagen). Ahora se traen en ráfaga $\frac{k}{16}$ pixeles (si la imagen está en escala de grises). Esto minimiza notablemente la penalización que se paga por acceder a la memoria RAM que como sabemos es mucho más lenta en términos de velocidad que los registros internos del procesador.
-% 
-% Estas observaciones valen en caso que la operatoria se haga con valores enteros. Para el caso de Frei-Chen que tiene un $\sqrt{2}$ en la matriz esto deja de ser cierto ya que en ese caso, se opera directamente con números reales representados con precisión simple de 32-bits.
+Dado que este trabajo consiste en una optimización de un algoritmo ya implementado,
+cuando comenzamos a hacerlo teníamos bastante claro \emph{qué} teníamos que hacer.
+Lo que quedaba por averiguar era \emph{cómo} hacerlo; nos referimos por supuesto al
+diseño de los algoritmos de cómputo en paralelo.
 
-\subsubsection{Precisión numérica} %%esto creo que es general, de última yo lo uso en roberts y lo pongo ahí sino.
+Tal es así que la tarea en un principio parecía sencilla: esta vez no nos trabaríamos
+con todas las incertidumbres y errores surgidos en el trabajo anterior, sólo tendríamos
+que reproducir los mismos algoritmos levantando los datos de a ``paquetes'' y
+realizando sobre ellos más o menos las mismas operaciones que antes.
 
-Respecto de la forma de operar aritméticamente, surge un inconveniente si tenemos 16 pixeles (almacenados como bytes) cuando tenemos que hacer una resta por ejemplo, ya que podríamos estar perdiendo información al saturar. Por ejemplo:
+Poco a poco se fue haciendo evidente, sin embargo, que esto no era cierto; la
+programación con el modelo SIMD requiere un enfoque completamente distinto y 
+tiene sus propias complicaciones. Al desarrollar un algoritmo de este tipo, se 
+presentan muchas posibilidades de diseño, limitaciones y además requiere un
+trabajo adicional para acomodar los datos: empaquetarlos, desempaquetarlos,
+mezclarlos, etc...
 
-\begin{center}
-\begin{minipage}{0.30 \textwidth}
-$\begin{pmatrix}
-a_{11} & a_{12} \\
-a_{21} & a_{22}  \\
-\end{pmatrix}$
-\end{minipage}
-\ \ 
- \begin{minipage}{0.30 \textwidth}
-$\begin{pmatrix}
-15 & 255 \\
-1 & -255 \\
-\end{pmatrix}$
-\end{minipage}
-\end{center}
+El \emph{qué}, aquello que conocíamos, era solamente el algoritimo a alto nivel.
+Lo que había que hacer era recorrer la imagen fuente y, por cada pixel, hallar el
+``producto interno'' del entorno del punto con la matriz de convolución en X. Es
+decir, calcular la suma de productos elemento a elemento de la matriz contra una
+submatriz del dibujo del mismo tamaño. Ese resultado daría positivo o negativo
+dependiendo de la ``dirección'' del borde y de la matriz usada; inmediatamente
+lo saturaríamos a 0 quedándonos solamente con los bordes en una dirección y
+sentido.
 
-En este caso si la convolución se hace al $a_{11}$ con la matriz de Roberts quedaría: $a_{11} = a_{22} - a_{21}$ que en nuestro caso se resume a...
+Luego haríamos exactamente lo mismo con la matriz de convolución en Y. Una vez
+hecho esto tenemos dos valores no negativos que representan bordes en dos direcciones
+perpendiculares; entonces los sumamos y, saturando esa suma a 255 la escribiríamos 
+en la imagen destino como un pixel en la misma posición en la que estábamos parado
+en la imagen fuente.
 
-Entonces para que en las restas de números no se pierda información en el medio lo que se hace es lo siguiente: traemos los bytes pero luego los desempaquetamos como \emph{words} de forma tal de no perder información con las restas. Luego los empaquetamos saturados para grabarlos en la imagen destino convenientemente. 
 
-\pagebreak
-Gráficamente sería algo como: 
+\subsubsection{Programación con SIMD}
 
-% \includegraphics[scale=0.55]{/home/connor/Escritorio/fetch.pdf}
+En esta segunda parte asumimos que las imágenes tienen un ancho múltiplo de 16.
+Esto implica, por un lado, que ya no es necesario calcular el \emph{widthstep}
+como hacíamos antes. Como \emph{OpenCV} deja cada fila de pixeles alineada a 4
+bytes en memoria, teníamos que calcular el mínimo múltiplo de 4 mayor o igual al
+ancho de la imagen. Ahora en cambio el width (ancho) y el widthstep coinciden.
 
-Sin embargo, estas observaciones valen en caso que la operatoria se haga con valores enteros. Para el caso de Frei-Chen que tiene un $\sqrt{2}$ en la matriz esto deja de ser cierto ya que en ese caso, se opera directamente con números reales representados con precisión simple de 32-bits.
+Además esto nos evita accesos a memoria, pues en nuestras anteriores implementaciones
+	guardábamos el widthstep en un registro para movernos por los mapas de bits pero
+accedíamos a memoria para consultar el width para saber cuándo terminar el bucle.
+
+El hecho de que el ancho sea múltiplo de 16 también puede aprovecharse para operar
+con los registros \textbf{XMM}, donde caben justamente 16 pixeles (cada uno deuna  un byte).
+Por ejemplo podemos dividir cada fila en bloques contiguos de 16 pixeles, levantando
+cada bloque de una vez hacia un registro \textbf{XMM}.
+
+Esto es justamente lo que hicimos en el caso de \textbf{Roberts} y en el de
+\textbf{Frei-chen} (en este caso lo hicimos de a 8). Pero, como veremos más adelante,
+no es necesario basarse en esa condición: las implementaciones de \textbf{Prewitt} y
+\textbf{Sobel} barren cada fila de a 14 lugares, y están pensados para imágenes 
+de cualquier ancho.
+
+Para ello usamos la instrucción \textbf{\texttt{MOVQ}} en el caso de Frei-chen
+(para levantar cada bloque de 8 pixeles en la parte baja de un registro \textbf{XMM}) y la
+instrucción \textbf{\texttt{MOVDQU}} en los demás casos (para levantar bloques de
+16 pixeles en registros \textbf{XMM}).
+
+Una observación importante es que para operar con esos bytes sin signo (valores de
+0 a 255) necesitamos extenderles el signo. Si operáramos usando bytes no podríamos
+representar valores negativos ni mayores a 255, lo cual es necesario para aplicar
+las matrices de convolución.
+
+Para ello nos valimos de las instrucciones \textbf{\texttt{PUNPCKHBW}} y 
+\textbf{\texttt{PUNPCKLBW}} que permiten desempaquetar la parte alta y baja
+respectivamente de un \textbf{XMM} transformando los 8 bytes en 16 words (completando con
+ceros). Esto se hace usando como operando fuente un registro con ceros.
+
+Luego cada implementación realiza con esas words el procesamiento necesario,
+explicado en las próximas secciones, tratándolas como enteros \textbf{signados}.
+La excepción a esto es \textbf{Frei-chen}, que debe volver a desempaquetar los datos
+en dwords y castearlos a flotantes de precisión sencilla. El casteo se realiza con
+la instrucción \textbf{\texttt{CVTDQ2PS}}.
+
+Luego del procesamiento correspondiente a la aplicación de las matrices, llegamos
+siempre a tener los valores de las derivadas en registros \textbf{XMM} como 8 words signadas.
+Para poder volcar los valores necesitamos saturarlos a bytes sin signo (a 0 y a 255)
+y además empaquetarlos de a 16 bytes en registros \textbf{XMM}. Todo esto se logra con la 
+instrucción \textbf{\texttt{PACKUSWB}}, que justamente toma dos registros \textbf{XMM} con
+8 words signadas cada uno y las empaqueta en un solo registro como bytes sin signo
+con saturación. Solo falta aplicar \textbf{\texttt{MOVDQU}} o \textbf{\texttt{MOVQ}}
+nuevamente para escribir los valores definitivos en el destino.
+
 
 \subsubsection{Operador de Roberts}
 
@@ -80,11 +129,17 @@ $\begin{pmatrix}
 \end{minipage}
 \end{center}
 
-Dada la precondición que dice que el ancho de las imágenes es múltiplo de 16 bytes y que cada pixel está representado con 1 byte, entonces, podemos visualizar a la imagen de forma tal que esta tiene $n$ columnas de 16 bytes de ancho. Además al usar los registros \texttt{xmm} de 16 bytes de tamaño, podemos efectivamente para una fila de tamaño $k$ pixeles hacer nada más que $\frac{k}{16}$ accesos a memoria para traer toda la fila en cuestión cuando antes no quedaba otra opción que traer todos los pixeles de uno en uno. 
+Este operador se diferencia de los demás por el hecho de tener matrices de 2x2,
+con sólo dos valores significativos (no ceros). Con registros de propósito general
+esto no parecía marcar una gran diferencia, pues las operaciones se hacían
+secuencialmente y no nos afectaba mucho la cantidad que hubiera que efectuar.
 
-El algoritmo que se encarga de realizar el operador de Roberts está dividido en dos partes independientemente de la dirección en la que se está pasando el operador. 
+Pero ahora que estamos implementándolo con paralelización, este operador resulta
+más simple que los demás.
 
-En primer lugar, como el ancho de la imagen es múltiplo de 16 bytes, se optó por dividir dicho ancho en múltiplos de 16 bytes, que como se mencionó antes es el tamaño de los registros \texttt{xmm}. Entonces se tienen por lo menos $n$ columnas de 16 bytes de ancho y se procede trabajar con las $n-1$ primeras de la siguiente forma: 
+En primer lugar, como el ancho de la imagen es múltiplo de 16, se optó por cargar
+los datos en columnas de a 16, que como se mencionó antes es el tamaño de los registros \texttt{xmm}. Entonces se tienen $n$ columnas de 16 bytes de ancho y se procede trabajar con las $n-1$ primeras de la siguiente forma: 
+
 \begin{itemize}
 \item Máscara X: Se cargan los 16 bytes de la fila actual en un registro y luego se cargan los 16 bytes de la fila siguiente pero desplazados uno. Es decir, si la fila actual es $x$ y la siguiente es $x'$ entonces se carga en un registro el $x_i, x_{i+1}, x_{i+2}, ... , x_{i+15}$ y en el otro $x'_{i+1}, x'_{i+2}, x'_{i+3}, ... , x'_{i+16}$ donde $i$ es el número de la columna de la imagen. 
 \item Máscara Y: Este caso es análogo al anterior solo que el desplazamiento se hace en la fila actual, osea, se carga el $x_{i+1}, ..., x_{i+16}$ en un registro y en el siguiente el $x'_i, ... x'_{i+15}$
@@ -100,19 +155,12 @@ Luego se procesa la última columna de la siguiente manera:
 
 En ambos casos se realizan las operaciones aritméticas pertinentes y luego se guarda el resultado donde corresponde. 
 
-El volcado de datos a memoria se realiza solamente cuando ambas máscaras han sido pasadas. Antes se utiliza un registro \texttt{xmm} como acumulador para evitar un acceso que sería innecesario.
+El volcado de datos a memoria se realiza solamente cuando ambas máscaras han sido pasadas. Antes se utiliza un registro \textbf{XMM} como acumulador para evitar un acceso que sería innecesario.
 
 
+\subsubsection{Operadores de Prewitt y de Sobel}
 
-%acá se pueden poner imágenes... opcional igual. En caso negativo explico un poco mejor sino se entiende...
-
-%\includegraphics[scale=0.60]{/home/connor/Escritorio/dibujo.pdf}
-
-
-
-\subsubsection{Operador de Prewitt}
-
-Matrices de convolución para el operador de Prewitt en $x$ e $y$ respectivamente.
+Matrices de Prewitt:
 
 \begin{center}
 \begin{minipage}{0.30 \textwidth}
@@ -132,17 +180,56 @@ $\begin{pmatrix}
 \end{minipage}
 \end{center}
 
-Como podemos ver, en el caso del operador de Prewitt consta, tanto para X como para Y, de matrices de $3x3$ toda de números naturales, así que podemos trabajar con operaciones sobre enteros. Utilizamos, para realizar este operación, los registros registros simd, para poder procesar en paralelo. Intentamos ir procesando de la máxima cantidad de pixeles posibles, así que terminamos realizando un algoritmo que llega a procesar de a 14 pixeles en paralelo, el cual se detalla a continuación.
+Matrices de Sobel:
 
-Como la matriz de convolución es de $3x3$ y el valor a calcular es el del centro de la misma, lo primero que notamos es que todos los bordes de la imagen no se van a poder calcular, así que lo que se hace es poner 'a mano' un 0 en sus respectivas posiciones. Otro punto a tener en cuenta es que, como se comentó anteriormente, a pesar de poder levantar de a 16 bytes, las operaciones se realizan sobre word, así que en principio vamos a tener el doble de registros ocupados que la cantidad que levantamos.
+\begin{center}
+\begin{minipage}{0.30 \textwidth}
+$\begin{pmatrix}-1 & 0 & 1 \\-2 & 0 & 2 \\-1 & 0 & 1 \\\end{pmatrix}$
+\end{minipage}
+\ \ 
+ \begin{minipage}{0.30 \textwidth}
+$\begin{pmatrix}-1 & -2 & -1 \\0 & 0 & 0  \\1 & 2 & 1 \\\end{pmatrix}$
+\end{minipage}
+\end{center}
 
-La idea del algoritmo en si es, principalmente, recorrer toda la imagen fuente e ir guardando los resultados en la imagen destino. Para esto cabe destacar que la primer fila entera, se saltea y se pone todo en 0(negro) y lo mismo hacemos con la ultima fila. En cuanto el ciclo que se realiza, lo que hacemos es tener un bucle anidado, que simulan el recorrido de de la imagen en sobre cada fila y, para cada fila, sobre las columna.
-Dentro del bucle de las columnas, se aplica la convolución sobre x y sobre y, como se explica a continuación.
+La implementaciones de estos operadores son análogas entre sí, por eso las 
+describimos juntas aquí.
+
+Como podemos ver estos operadores tienen matrices de $3x3$ de números enteros.
+Esto presenta un panorama más complejo que el de Roberts. En aquel caso, bastaba
+con levantar dos filas de 16 pixeles (desplazadas una posición entre sí) para hallar
+el resultado de una fila completa también de 16 pixeles.
+
+Ahora la situación es distinta, pues 3 filas de 16 pixeles alcanzan para calcular
+los valores de los 14 pixeles centrales. En un principio se nos ocurrieron dos
+opciones: una sería levantar bloques más grandes (de 18) tomando un pixel adicional
+en cada costado, y acomodarlos adecuadamente en los registros \textbf{XMM} para
+poder calcular el resultado no de 14 sino de 16 pixeles por iteración. Así vamos
+a poder completar de a 16 pixeles en la imagen destino.
+
+Sin embargo optamos en este caso por la segunda opción: levantar los datos de a 16
+y movernos de a 14. Esto obviamente no tiene en cuenta la restricción de que el 
+ancho es múltiplo de 16. Por lo tanto cuando avancemos de a 14 es posible que en algún
+momento nos ``pasemos de largo''.
+
+Al principio creímos que las últimas columnas (menos de 14) tenían que ser calculadas
+fuera del ciclo, porque si intentamos acceder a memoria más allá de los límites de las
+imágenes podríamos estar escribiendo basura en algunos lugares del resultado e incluso
+en lugares de la memoria que no nos corresponden.
+ 
+Pero luego nos dimos cuenta de que no había tantos problemas: donde termina cada fila,
+si nos pasamos escribiendo simplemente vamos a empezar a escribir datos en la fila
+siguiente (que luego pisaremos con la información válida cuando la hayamos calculado);
+por último, para la última fila que escribimos tampoco hay problema, pues recordemos
+que la última fila escrita es la anteúltima del dibujo.
+
+Para esto cabe destacar que la primer fila entera, se saltea y se pone todo en 0(negro)
+y lo mismo hacemos con la ultima fila. Para cada las demás filas se realiza lo siguiente:
 
 \begin{itemize}
-\item Mascara X: Para esta mascara, lo que hacemos es en en donde estamos parado, que es el valor centrar del primer pixel a calcular, tomamos la los 16 pixeles de la fila de arriba, la actual y la de abajo, desplazados 1 a la izquierda, ya que ese dato es necesario para calcular los pixeles. Una vez que se tienen estas 3 lineas cargadas de 16 bytes cada una, se pasan a 6 lineas de 8 words cada una, para así poder hacer los cálculos sin perder precisión. De esta forma, y  para reducir significativamente los accesos a memoria, utilizamos 6 de los 8 registros xmm para guardar datos, con lo cual debemos adaptar el algoritmo para que se puedan hacer las cuentas con dos registros. Esta mascara esta dividida en dos partes
+\item Mascara X: Para esta mascara, lo que hacemos es en en donde estamos parado, que es el valor centrar del primer pixel a calcular, tomamos la los 16 pixeles de la fila de arriba, la actual y la de abajo, desplazados 1 a la izquierda, ya que ese dato es necesario para calcular los pixeles. Una vez que se tienen estas 3 lineas cargadas de 16 bytes cada una, se pasan a 6 lineas de 8 words cada una, para así poder hacer los cálculos sin perder precisión. De esta forma, y  para reducir significativamente los accesos a memoria, utilizamos 6 de los 8 registros xmm para guardar datos, con lo cual debemos adaptar el algoritmo para que se puedan hacer las cuentas con dos registros. Esta máscara está dividida en dos partes
   \begin{itemize}
-    \item Los 8 primeros pixeles: para poder calcular estos pixeles lo que hicimos es, utilizando los tres registros xmm que contienen estos pixeles, primero hacemos las tres restas, que esto es restar los tres registros así como están (ie. $res=-a1-a2-a3$) y luego, para poder realizar las sumas, despasamos cada registro en dos posiciones, poniendo donde estaba el primer pixel, el tercero, el segundo el cuarto, etc.
+    \item Los 8 primeros pixeles: para poder calcular estos pixeles lo que hicimos es, utilizando los tres registros xmm que contienen estos pixeles, primero hacemos las tres restas, que esto es restar los tres registros así como están (ie. $res=-a1-a2-a3$) y luego, para poder realizar las sumas, desplazamos cada registro en dos posiciones, poniendo donde estaba el primer pixel, el tercero, el segundo el cuarto, etc.
     De esta manera, quedan las ultimas dos posiciones libres, las cuales se completan con los dos primeros pixeles de la parte alta. Una vez que se tiene esto, se suman al resultando anterior. 
     \item Los 8 últimos pixeles: de estos pixeles los que vamos a calcular son las primeras 6 posiciones, para esto primero hacemos la resta igual con en el item anterior, y después lo que hacemos es desplazar cada registro dos pixeles, para poder hacer la suma correspondiente. Si es como obtenemos 6 valores calculados. 
   \end{itemize}
@@ -152,33 +239,19 @@ Por ultimo lo que hacemos es poner todos estos pixeles un un solo registro, satu
     \item Los 8 primeros pixeles: Lo que hacemos acá es sumar y restar los registros correspondientes, 3 veces pero en cada paso vamos desplazando cada registro para sacar el pixel en la primer posición, y poniendo en la ultima posición el primer pixel del registro que contiene a los 8 posteriores.
     \item Los 8 últimos pixeles: en este paso se realiza los mimos pasos que en los primeros 8, con la salvedad que no se rellena en cada desplazamiento, ya que solo necesitamos los primeros 6 pixeles.
   \end{itemize}
-  Una vez hecho esto, se procede a unir los resultados, saturando sin signo para que queden valores entre 0 y 255. Para terminar, lo que se hacer es levantar los valores guardaos con la mascara x, sumarlos al actual y volverlos a guardar.
+  Una vez hecho esto, se procede a unir los resultados, saturando sin signo para que queden valores entre 0 y 255. Para terminar, lo que se hacer es levantar los valores guardados con la mascara x, sumarlos al actual y volverlos a guardar.
 \end{itemize}
 Ya habiendo calculado estos pixeles, lo que se hace es avanzar el iterador de la columna unas 14 posiciones, e iterar hasta que nos pasemos del ancho de la imagen.
 
-\subsubsection{Operador de Sobel}
+Como se ve, una vez que tenemos la derivada en X la escribimos en el destino como
+si ya hubiéramos terminado, y una vez que tenemos la derivada en Y levantamos
+aquellos valores y los sumamos. En el caso de Sobel, que permite aplicar convolución
+solamente en X y solamente en Y, se realiza sólo uno de los pasos.
 
-Matrices de Sobel en $x$ e $y$
-
-\begin{center}
-\begin{minipage}{0.30 \textwidth}
-$\begin{pmatrix}
--1 & 0 & 1 \\
--2 & 0 & 2 \\
--1 & 0 & 1 \\
-\end{pmatrix}$
-\end{minipage}
-\ \ 
- \begin{minipage}{0.30 \textwidth}
-$\begin{pmatrix}
--1 & -2 & -1 \\
-0 & 0 & 0  \\
-1 & 2 & 1 \\
-\end{pmatrix}$
-\end{minipage}
-\end{center}
-
-En esta parte no vamos a detallar mucho, ya que es muy similar a la forma de calcular Prewitt, las únicas diferencias a destacar son, que para poder ver si se debe hacer en realizar la mascara de X o la de Y, se va preguntando, basado en los parámetros XOrder e YOrder, si hay que entrar en ese calculo, o si hay que saltarlo. Y por otro lado, la otra modificación es que se suma o resta dos veces (en lugar de una) en los lugares correspondiente para que cumpla con la matriz de convolución correspondiente. Salvando estas diferencias, el método es casi igual al de Prewitt y es por eso que no se entra en detalle.
+Si bien parecería más eficiente guardarse las derivadas en X no en memoria sino en
+algún XMM hasta obtener las derivadas en Y, a la hora de hacer esas implementaciones
+no nos quedó ningún registro disponible a tal fin de manera que resolvimos dejarlo
+como se explicó.
 
 \subsubsection{Operador de Frei-Chen}
 
@@ -192,7 +265,7 @@ $\begin{pmatrix}
 -1 & 0 & 1 \\
 \end{pmatrix}$
 \end{minipage}
-\ \ 
+q\ \ 
  \begin{minipage}{0.30 \textwidth}
 $\begin{pmatrix}
 -1 & -\sqrt{2} & -1 \\
@@ -201,3 +274,98 @@ $\begin{pmatrix}
 \end{pmatrix}$
 \end{minipage}
 \end{center}
+
+Frei-chen es el operador que se agregó en esta segunda parte del trabajo. Además
+es el único que requiere procesamiento en punto flotante pues algunos de los
+coeficientes de sus matrices son números reales (raíces de dos).
+Con los registros de propósito general este procesamiento habría sido un tanto
+complicado.
+
+Usando los registros XMM (de 128 bits) como cuatro valores de punto flotante de 
+32 bits (precisión simple) pudimos hacer una implementación con procesamiento 
+paralelo de forma tan simple como lo hicimos con números enteros. La única 
+diferencia importante es que en este caso entran 4 valores por registro XMM (con
+enteros usamos 8 valores de 16 bits).
+
+Las matrices de \textbf{Frei-chen} son muy parecidas a las otras de 3x3 que 
+usamos (\textbf{Prewitt} y \textbf{Sobel}), de manera que los algoritmos pueden
+pensarse de una forma parecida pese a la diferencia en la cantidad de valores
+empaquetados.
+
+Siguiendo el mismo esquema podríamos cargar tres filas de 8 pixeles (en lugar de
+16) usando dos registros XMM para cada fila. Con los valores de esos 3x8 pixeles
+podríamos calcular los valores de 6 pixeles (en lugar de 14), que son los 6
+centrales de la fila del medio.
+
+Sin embargo en este punto tomamos otro enfoque, para poder recorrer las
+imágenes realmente de a 8 y no de a 6. La idea es la siguiente: numeremos las 
+columnas desde 0 y supongamos que en la primera iteración levantamos desde la
+columna 1 hasta la 8 (en lugar desde la 0 hasta la 7 como sería más típico).
+Estos datos nos van a permitir calcular las derivadas para 6 pixeles, desde la 
+columna 2 hasta la 7. El pixel de la columna 8 no lo podemos calcular pues para
+ello necesitamos información de las columnas 7, 8 y 9 (nos falta la 9) así como
+tampoco podemos calcular el de la columna 9 (pues nos faltan los datos de la fila
+9 y la 10).
+
+Lo que pensamos fue, en esa iteración (además de escribir los datos de los 6 pixeles
+resueltos) guardarnos de alguna manera la información correspondiente a las dos últimas
+columnas en los registros \textbf{XMM}. Entonces, en el siguiente paso levantaremos
+(moviéndonos de a 8 posiciones) las columnas 9-16, pero además tendremos información
+de las columnas 7 y 8 (del paso anterior). En definitiva, vamos a poder resolver 8
+puntos, aquellos dos que nos habían quedado ``colgados'' (el 8 y el 9) más los 6
+pixeles centrales del bloque levantado (10-15).
+
+Usando este mecanismo es claro que podemos efectivamente avanzar de a 8 filas. Ahora
+bien, ¿cómo nos guardamos la información de esas columnas? Usamos un mecanismo al
+que llamamos \emph{comprimir columnas}. Mirando la matriz en X, observamos que 
+podemos operar verticalmente, calculando paralelamente para cada columna el valor de la primera
+fila más raíz de dos por la segunda más la tercera. Como se ve, estos son los coeficientes
+por los que necesitamos multiplicar, más allá del signo.
+
+En el código fuente y en adelelante nos referimos como $(n)$ a la columna $n$ comprimida.
+Al resultado buscado, es decir a la derivada en la columna $i$, sea en X o en Y,
+lo llamamos $[i]$. Una vez que las columnas están comprimidas de esta manera, la derivada
+de un pixel se halla como una resta de columnas comprimidas.
+
+$ [i] = (i+1) - (i) $
+
+Asíque acomodando los datos de manera adecuada resulta sencillo hallar las derivadas en X
+a partir de las columnas así comprimidas. Para el caso de Y, la compresión por columnas
+es distinta: en este caso ni siquiera interesa el valor de la fila del medio; el valor
+comprimido es simplemente la tercera fila menos la primera.
+
+Es decir que nos quedamos con la diferencia entre las filas sin importar cuál vamos
+a multiplicar luego por raíz de dos. El cálculo de cada derivada se reduce a...
+
+$ [i] = (i-1) + \sqrt{2}(i) + (i+1) $
+
+La idea de todo esto es que de una iteración a la otra queremos guardarnos los
+valores comprimidos de las dos últimas columnas, tanto en X como en Y. Para esto
+nos alcanza un único registro \textbf{XMM} (\texttt{xmm5} en nuestro código) pues
+se trata de cuatro valores.
+
+En resumen, entonces, el método es el siguiente: en cada paso levantamos 8 columnas
+de datos (en 3 filas por supuesto); desde la columna $ 8*i+1 $ hasta la $ 8*i+8 $.
+Numerémoslas desde 1 hasta 8 sin importar si se trata del principio de la fila.
+Inmediatamente comprimimos en X esas columnas obteniendo $ (1), (2), ..., (8) $.
+Además sabemos que en \texttt{xmm5} tenemos salvados los valores comprimidos de
+dos columnas anteriores del paso anterior; las llamamos $ (-1) $ y $ (0) $.
+Recordemos que las tenemos comprimidas tanto en X como en Y.
+
+Con esas 10 columnas comprimidas vamos a poder encontrar 8 derivadas en X definitivas
+($ [0], [1], ..., [7] $). Estos valores parciales no los volcamos en la imagen destino
+como hacíamos en el caso de Prewitt y Sobel, si no que los salvamos en un XMM como
+8 enteros de 16 bits (con signo) (\texttt{xmm4} en nuestro código).
+Pero además es menester salvar en \texttt{xmm5} los valores
+$ (7) $ y $ (8) $, pues son quienes en la próxima iteración actuarán como
+$ (-1) $ y $ (0) $ para X. Entonces los salvamos sin perder los valores allí
+reservados para Y del paso anterior.
+
+Con Y hacemos lo mismo, y finalmente también salvamos las columnas comprimidas en Y
+$ (7) $ y $ (8) $ para el siguiente paso. Una vez que tenemos las derivadas en X y en Y
+en sendos registros, debemos saturarlas a 0 para evitar cancelaciones. Esto lo logramos 
+con \textbf{\texttt{PMAXSW}} contra un registro de ceros. Luego hacemos la suma y,
+como se explicó anteriormente, las instrucciones \textbf{\texttt{PACKUSWB}} y
+\textbf{\texttt{MOVQ}} hacen el resto.
+
+

@@ -1,17 +1,34 @@
 \section{Conclusiones}
 
-Con la realización del presente trabajo pudimos apreciar la mejora que se tiene al implementar un algoritmo con instrucciones del tipo SIMD.
+Con la realización del presente trabajo pudimos apreciar la mejora que se tiene
+al implementar un algoritmo con instrucciones del tipo SIMD.
+De acuerdo a la experimentación realizada, pudimos observar que esta mejora consiste
+en una eficiencia aproximadamente 10 veces más grande.
 
-De acuerdo a la experimentación realizada, pudimos observar que en promedio la mejora de utilizar SIMD es de alrededor de un XXXXX \% en promedio para las implementaciones de los operadores de Roberts, Prewitt y Sobel.
+Si bien los resultados obtenidos son óptimos es evidente la limitación que en 
+principio tienen estas instrucciones ya que como se dijo en la introducción, no 
+todos los algoritmos son paralelizables al estilo SIMD. Sin embargo y como se
+notó en este trabajo, son ideales para el procesamiento de imágenes.
+Pareciera que toda transformación que se quiere aplicar a imágenes (o a sonidos)
+encontrará en SIMD una herramienta poderosa.
 
-Si bien los resultados obtenidos son óptimos es evidente la limitación que en principio tienen estas instrucciones ya que como se dijo en la introducción, no todos los algoritmos son paralelizables y tratables bajo el concepto de la filosofía SIMD.
+Como ya dijimos, pese a la relativa simplicidad con la que se pueden llevar a
+cabo este tipo de algoritmos en esta arquitectura, queremos mencionar nuevamente
+que esto requiere un esfuerzo adicional, y en muchos casos trabas importantes.
+Además, el código resultante es mucho menos declarativo, así como también mucho
+más sensible a cambios.
 
-A pesar de los beneficios de este tipo de instrucciones, el grupo encontró particular dificultad a la hora de \emph{debuggear} el programa ya que por un lado, no logramos que el compilador genere los símbolos de \emph{debugging} correctamente a pesar de estar configurado para esto y además,la programación con MMX y SSE hace el trabajo un poco más dificil ya que en general no se acostumbra a pensar en paralelo cuando uno programa con lenguajes de nivel más alto. Vale mencionar también que el código se vuelve un poco más críptico cuando se emplean este tipo de técnicas.
+Por último queremos observar que no hay motivo para conformarse con los registros
+\textbf{XMM}. De la misma manera, nuevas arquitecturas podrían proveer no 8 sino
+16 o 32 registros, no de 128 bits sino de 256 o 1024. En ese caso se manifestará
+la poca reusabilidad de la paralelización, pues las implementaciones hechas para
+8 registros de 128 bits claramente no van a aprovechar los nuevos 16 o 32 registros.
 
-Creemos que es fundamental ahondar en este tipo de técnicas de programación en paralelo ya que si bien su uso en principio puede estar restringido a un conjunto bastante acotado de problemas, estamos convencidos que es positivo hacer hincapie en este tema ya que la manera de pensar este tipo de problemas es distinta a lo habitual y consecuentemente, es un recurso nuevo y que puede ser muy útil para encarar diversos problemas.
-
-%%%%
-
-
-Como discutimos anteriormente, verificamos el hecho esperado de que nuestras implementaciones no alcanzarían la rapidez de las de OpenCV.
-
+A priori podría pensarse en un esquema en el que el código no esté tan atado a
+cómo acomodar los datos, sino que tenga sentido en diferentes arquitecturas de
+cálculo en paralelo, aprovechando en cada caso la cantidad provista de registros
+y bits. Para ello haría falta trabajar con código de más alto nivel, pensando en
+qué operaciones se deben paralelizar pero no de a cuántas. Las cuestiones de 
+acomodamiento de datos quedaría en manos de un compilador. Es una posibilidad
+muy complicada pero también muy interesante, y sólo con el paso del tiempo 
+conoceremos su factibilidad.
