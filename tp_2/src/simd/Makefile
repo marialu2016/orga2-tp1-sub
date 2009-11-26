@@ -8,24 +8,21 @@ build: main clean
 
 # Compila para debugging
 main: $(OBJ)
-	gcc -g -o main $(OBJ) `pkg-config --cflags --libs opencv`
+	gcc -o main $(OBJ) `pkg-config --cflags --libs opencv`
 	
 
 main.o:
-	gcc -g -c main.c -o main.o `pkg-config --cflags --libs opencv` 
+	gcc -c main.c -o main.o `pkg-config --cflags --libs opencv` 
 	
 cImpl.o:
-	gcc -g -c cImpl.c -o cImpl.o
-	
+	gcc -c cImpl.c -o cImpl.o
 	
 %.o: %.asm
-	nasm -felf -ggdb -o $@ $^
-	
+	nasm -felf -o $@ $^
 
 clean:
 	rm -f *.o
 	
 clean_all: clean
-	rm -f main *~
+	rm -f main
 	
-
