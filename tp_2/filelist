@@ -34,8 +34,8 @@ src/
     asmSobel.asm                     -    "
     cImpl.c                          - implementación en C 
     main.c                           - punto de entrada del programa
-	Makefile                         - Makefile del programa
-	simdFreichen.asm                 - nuevas implementaciones con SIMD
-	simdPrewitt.asm                  -    "
-	simdRoberts.asm                  -    "
-	simdSobel.asm                    -    "
+    Makefile                         - Makefile del programa
+    simdFreichen.asm                 - nuevas implementaciones con SIMD
+    simdPrewitt.asm                  -    "
+    simdRoberts.asm                  -    "
+    simdSobel.asm                    -    "
