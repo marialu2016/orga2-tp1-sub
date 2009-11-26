@@ -56,14 +56,18 @@ de manera relativamente sencilla, y con un enorme beneficio en relación a la ef
 Además, los procesadores actuales de uso general contienen siempre estas extensiones,
 por lo que la portabilidad en la práctica no suele ser un problema.
 
+\pagebreak
 \subsection{SIMD vs. OpenCV}
 
-%TODO insertar grafico aqui :D
-%\includegraphics[scale=0.5]{../resultados/simdVScv.png}
+\includegraphics[scale=0.5]{../resultados/graf3.png}
 
 En este último gráfico en el que comparamos la eficiencia de las nuevas implementaciones
 de Sobel contra las de \textbf{OpenCV}, podemos observar que se superó el rendimiento de esa
 biblioteca. Esto parecería indicar que las implementaciones de \textbf{OpenCV} no usan
 XMM sino los registros de propósito general.
+
+Las imágenes de este gráfico son todas ``múltiplos'' en tamaño de \texttt{lena.bmp} en el siguiente sentido: \texttt{bajo.jpg} tiene exactamente el doble de pixeles (1024x1024), \texttt{viola.jpg} tiene 3 $\times$ ``lena'' (1536x1536) y, por último, \texttt{hulk.jpg} que es 4 veces ``lena'' (2048x2048). 
+
+
 
 

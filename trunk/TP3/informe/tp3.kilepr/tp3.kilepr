@@ -4,7 +4,7 @@ img_extIsRegExp=false
 img_extensions=.eps .jpg .jpeg .png .pdf .ps .fig .gif
 kileprversion=2
 kileversion=2.1 beta2
-lastDocument=../desarrollo.tex
+lastDocument=../concl.tex
 masterDocument=
 name=tp3
 pkg_extIsRegExp=false
@@ -16,21 +16,39 @@ src_extensions=.tex .ltx .latex .dtx .ins
 MakeIndex=
 QuickBuild=
 
-[item:../desarrollo.tex]
+[item:../concl.tex]
 archive=true
-column=384
+column=170
 encoding=UTF-8
 highlight=LaTeX
-line=433
+line=4
+open=true
+order=3
+
+[item:../desarrollo.tex]
+archive=true
+column=148
+encoding=UTF-8
+highlight=LaTeX
+line=36
 open=true
 order=1
 
-[item:../main.tex]
+[item:../intro.tex]
 archive=true
-column=40
+column=1
 encoding=UTF-8
 highlight=LaTeX
-line=59
+line=12
+open=true
+order=2
+
+[item:../main.tex]
+archive=true
+column=1
+encoding=UTF-8
+highlight=LaTeX
+line=115
 open=true
 order=0
 
