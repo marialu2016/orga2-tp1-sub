@@ -1,0 +1,41 @@
+Archivos entregados:
+
+enunciado/
+    enunciado.pdf                    - enunciado del tp
+
+exe/
+    main                             - ejecutable
+
+filelist                             - este archivo
+
+informe/                            
+    concl.tex                        - conclusión
+    desarrollo.tex                   - desarrollo
+    disc.tex                         - discusión
+    intro.tex                        - introducción
+    logo_uba.jpg                     - logo de la uba
+    main.pdf                         - informe
+    main.tex                         - main del informe
+    manual.tex                       - manual de usuario
+    sub.png                          - logo del grupo SUB
+
+resultados/
+    bass/                            - imágenes de ejemplo procesadas
+    lena/                            -    "
+    hulk/                            -    "
+    graf3.png                        - gráfico: SIMD vs. OpenCV
+    operadores.png                   - gráfico: comparación de operadores
+    simd.png                         - gráfico: SIMD vs. GPR
+    ...        (archivos .dat y .p con la información usada para los gráficos)
+
+src/
+    asmPrewitt.asm                   - implementaciones con GPR del TP1
+    asmRoberts.asm                   -    "
+    asmSobel.asm                     -    "
+    cImpl.c                          - implementación en C 
+    main.c                           - punto de entrada del programa
+	Makefile                         - Makefile del programa
+	simdFreichen.asm                 - nuevas implementaciones con SIMD
+	simdPrewitt.asm                  -    "
+	simdRoberts.asm                  -    "
+	simdSobel.asm                    -    "
