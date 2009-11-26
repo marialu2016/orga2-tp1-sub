@@ -3,12 +3,12 @@
 OBJ = main.o cImpl.o asmRoberts.o asmPrewitt.o asmSobel.o simdRoberts.o simdPrewitt.o simdSobel.o simdFreichen.o
 
 
-# Compila para debugging y elimina los *.o
-build: main clean
+# Compila y elimina los *.o
+build: ../exe/main clean
 
-# Compila para debugging
-main: $(OBJ)
-	gcc -o main $(OBJ) `pkg-config --cflags --libs opencv`
+# Compila 
+../exe/main: $(OBJ)
+	gcc -o ../exe/main $(OBJ) `pkg-config --cflags --libs opencv`
 	
 
 main.o:
