@@ -13,7 +13,7 @@ De esta forma, se cargaron los descriptores de segmento de memoria de la siguien
 
 %acá va la imagen del descriptor de segmento de memoria
 
-Basado en esta definción y en lo pedido en el ejercicio se tiene la siguiente tabla de descriptores de segmento:
+Basado en esta definición y en lo pedido en el ejercicio se tiene la siguiente tabla de descriptores de segmento:
 
 \begin{center}
 \begin{tabular}{|c|c|c|}
@@ -42,7 +42,7 @@ A continuación describimos los aspectos más relevantes de los descriptores ant
 
 Tras deshabilitar las interrupciones, cargamos la tabla anterior mediante la instrucción \texttt{lgdt} que guarda el descriptor de la gdt en el registro \texttt{gdtr}.
 
-Una vez concluído este paso, se procede a habilitar el bit \texttt{PE} del registro de control \texttt{CR0} mediante:
+Una vez concluido este paso, se procede a habilitar el bit \texttt{PE} del registro de control \texttt{CR0} mediante:
 
 \begin{verbatim}
 	mov     eax, cr0
@@ -59,7 +59,7 @@ En nuestro caso,
 Una vez ya en modo protegido, se procedió a inicializar con valores correctos los demás registros de segmento. En esta oportunidad setteamos a \texttt{ES} como un puntero al segmento de la memoria de video, y el resto de los registros de forma tal de apuntar al segmento de datos. 
 
 \begin{verbatim}
-;Apuntamos 'es' a la memoria de video y los demas al segmento de datos
+;Apuntamos 'es' a la memoria de video y los demás al segmento de datos
 	mov ax, 0x10    ; segmento de datos
 	mov bx, 0x18    ; memoria de video
 	mov ds, ax
@@ -70,14 +70,14 @@ Una vez ya en modo protegido, se procedió a inicializar con valores correctos l
 
 \end{verbatim}
 
-En último lugar, para el ítem que pide dibujar un recuadro del tamaño de la pantalla, se utilizó el segmento definido que comprende a la memoria de video (ES). Se la recorrió de forma tal de dibujar un caracter (una carita feliz) en los bordes mediante el siguiente código:
+En último lugar, para el ítem que pide dibujar un recuadro del tamaño de la pantalla, se utilizó el segmento definido que comprende a la memoria de video (ES). Se la recorrió de forma tal de dibujar un caracter (una cara feliz) en los bordes mediante el siguiente código:
 
 \begin{verbatim}
     ; Pintamos de negro la pantalla
             mov ecx, 80*25    ;toda la pantalla
             xor esi, esi
 
-            mov ax, 0x0000    ; negro, ningun caracter
+            mov ax, 0x0000    ; negro, ningún caracter
 
             cleanPantalla:
                 mov [es:esi], ax
@@ -86,7 +86,7 @@ En último lugar, para el ítem que pide dibujar un recuadro del tamaño de la p
 
             ; Dibujamos bordes horizontales
             mov ah, 0x0F        ; blanco brillante, fondo negro
-            mov al, 0x02        ; caracter carita
+            mov al, 0x02        ; caracter cara
             xor esi, esi
             mov edi, 80*24*2
             mov ecx, 80
@@ -117,7 +117,7 @@ En este ejercicio se nos pide configurar y habilitar el modo de paginación para
 
 Esto se hizo de la siguiente manera. Se definieron los directorios de páginas (cada directorio contiene hasta 1024 selectores de tablas de página que a su vez pueden contener 1024 páginas propiamente dichas). 
 
-En nuesto caso, definimos dos directorios de tablas de páginas (uno por cada tarea) y además en cada directorio, una única tabla de páginas. Esto se realiza de esta forma para cumplir con el mapa de memoria solicitado.
+En nuestro caso, definimos dos directorios de tablas de páginas (uno por cada tarea) y además en cada directorio, una única tabla de páginas. Esto se realiza de esta forma para cumplir con el mapa de memoria solicitado.
 
 Se empieza a ejecutar el siguiente pseudo-código\footnote{el código real de la siguiente rutina está en el archivo \texttt{paging.asm}} a partir de la dirección 0xA000 (d...)
 
@@ -153,7 +153,7 @@ mov cr3, eax	; se cr3 -> dirección del dir. de página
 ...se procede a habilitar el modo de paginación mediante la rutina:
 \begin{verbatim}
 mov eax, cr0
-or eax, 0x80000000 	; se setta el bit de paginación en cr0
+or eax, 0x80000000 	; se settea el bit de paginación en cr0
 mov cr0, eax
 \end{verbatim}
 
@@ -165,7 +165,7 @@ Luego para el inciso b) del ejercicio en cuestión es escribir en la memoria de 
 mov     ecx, mensaje_len
 
 ; Usamos 0x13000 porque apunta a la memoria de video
-; escribimos desde la posicion (1,1) (segunda fila y columna)
+; escribimos desde la posición (1,1) (segunda fila y columna)
 mov     edi, 0x13000 + 80 * 2 + 2   
 
  ; letras verdes, fondo azul
@@ -191,12 +191,12 @@ fin_mensaje:
 
 Para el ejercicio 3, se nos pide completar las entradas necesarias de la \texttt{IDT} (Interrupt Descriptor Table) de forma tal de asociar una rutina de interrupción para cada excepción del procesador y para la interrupción del reloj. Las interrupciones de excepciones muestran por pantalla cual de estas tuvo lugar, es decir, si hubo un fallo de página, por ejemplo, se imprime por pantalla el mensaje \texttt{``EXCEPTION: PAGE FAULT''}.
 
-Esto se logró luego de completar la IDT de forma correcta y asociando cada entrada de la IDT con el segmento de código definido anteriormente y con la rutina de atención de interrupciones que corresponde a dicha excepción. %A continuación vemos un ejemplo de esto: %estaría poner como queda un segmento... quise hacer una captura de pantalla del dibujito y llenarlo con los datos pero hay algo que no me termina de cerrar del macro del idt.c
+Esto se logró luego de completar la IDT de forma correcta y asociando cada entrada de la IDT con el segmento de código definido anteriormente y con la rutina de atención de interrupciones que corresponde a dicha excepción. %A continuación vemos un ejemplo de esto: %estaría poner como queda un segmento... quise hacer una captura de pantalla del dibujo y llenarlo con los datos pero hay algo que no me termina de cerrar del macro del idt.c
 
 Las rutinas de atención de excepciones están descriptas en dos archivos de \texttt{C}: \texttt{isr.c} e \texttt{isr.h}. El código de las mismas es en general similar y lo que hace es mostrar por pantalla que excepción se produjo. 
 
 \begin{verbatim}
-msgisr0: db 'EXCEPCION: Division por cero'
+msgisr0: db 'EXCEPCION: División por cero'
 msgisr0_len equ $-msgisr0
 _isr0:
         mov edx, msgisr0
@@ -206,7 +206,7 @@ _isr0:
 
 \end{verbatim}
 
-La particularidad de esta rutina es que el último parámetro que indica el lugar en donde se escribe el mensaje corresponde con la dirección \texttt{0x13000} que es a donde fue mapeada (via paginación) la memoria de video. % podría hasta ser un footnote
+La particularidad de esta rutina es que el último parámetro que indica el lugar en donde se escribe el mensaje corresponde con la dirección \texttt{0x13000} que es a donde fue mapeada (vía paginación) la memoria de video. % podría hasta ser un footnote
 
 Especial tratamiento tuvo la rutina de atención de la interrupción del clock del microprocesador (\texttt{\_isr32}) que se encarga de llamar a la función \texttt{next\_clock} provista por la cátedra que dibuja un reloj en la pantalla, que con cada interrupción va cambiando su forma. Dicha rutina tiene el siguiente aspecto:
 \begin{verbatim}
@@ -219,7 +219,7 @@ _isr32:
     iret
 \end{verbatim}
 
-Para que todo lo anterior tenga sentido, es necesario agregar al archivo principal \texttt{kernel.asm} instrucciones que carguen en memoria la IDT mediante la función \texttt{idtFill()}\footnote{Presente en el archivo \texttt{idt.c}}. Además, se resetean los pics 8259 de forma tal de rempaear los dichos controladores a un espacio de interrupciones designado a los dispositivos de entrada-salida. % sacado de la clase de interrupciones de Daviiiid.
+Para que todo lo anterior tenga sentido, es necesario agregar al archivo principal \texttt{kernel.asm} instrucciones que carguen en memoria la IDT mediante la función \texttt{idtFill()}\footnote{Presente en el archivo \texttt{idt.c}}. Además, se resetean los pics 8259 de forma tal de remapear los dichos controladores a un espacio de interrupciones designado a los dispositivos de entrada-salida. % sacado de la clase de interrupciones de Daviiiid.
 De otra manera, la configuración ``de-facto'' entraría en conflicto porque esas direcciones están reservadas por intel (error de diseño de IBM). Entonces se settea un offset para el pic master en 0x20 y 0x28 para el pic slave (recordemos que se tienen dos pics conectados en cascada) %sacado de os-dev:http://wiki.osdev.org/8259_PIC
 
 En último lugar, se le pasa el descriptor de la IDT (el \texttt{IDT\_DESC}) y cargarlo en registro \texttt{IDTR} mediante la instrucción \texttt{lidt}.
@@ -272,4 +272,163 @@ En último lugar, se le pasa el descriptor de la IDT (el \texttt{IDT\_DESC}) y c
 
 En último lugar y respondiendo a la consigna final se nos requiere configurar el entorno para poder en primer lugar tener tareas en nuestro sistema y poder luego, hacer cambios entre ellas como lo haría un sistema operativo a gran escala. % :o
 
-Para ello completamos en primer lugar las \texttt{TSS} (Task State Segment) de las tareas \emph{pintor.tsk} y \emph{traductor.tsk}. Como sabemos, las TSS son esenciales para el manejo de tareas ya que estas contienen información esencial en lo que respecta a las mismas como ser el estado de los registros del procesador durante la ejecución del proceso en cuestión, los punteros a la pila, los registros \texttt{EFLAGS} y \texttt{EIP}, la tarea ejecutada antes que la actual y el valor del descriptor del directorio de páginas asociado a la tarea. 
+Para ello completamos en primer lugar las \texttt{TSS} (Task State Segment) de las tareas \emph{pintor.tsk} y \emph{traductor.tsk}. Como sabemos, las TSS son esenciales para el manejo de tareas ya que estas contienen información esencial en lo que respecta a las mismas como ser el estado de los registros del procesador durante la ejecución del proceso en cuestión, los punteros a la pila, los registros \texttt{EFLAGS} y \texttt{EIP}, la tarea ejecutada antes que la actual y el valor del descriptor del directorio de páginas asociado a dicha tarea. 
+
+De esta manera nos armamos las TSS en memoria gracias a una \texttt{struct} provista en el archivo \texttt{tss.h} que nos permitió cargar ordenadamente los datos de cada tarea. Se las agrupó en un arreglo de nombre \texttt{tsss} y se llenó de la siguiente forma: en el primer lugar la ``tarea \emph{dummy}'' (explicado más adelante), luego el pintor, y por último, la TSS correspondiente al traductor. Incluimos a modo de ejemplo ilustrativo como queda la TSS correspondiente al pintor\footnote{el resto de las entradas del arreglo tsss están en el archivo tss.c}:
+
+\begin{verbatim}
+   (tss) {
+        (unsigned short) 0,    //ptl
+        (unsigned short) 0,    //unused0
+        (unsigned int) 0,    //esp0
+        (unsigned short) 0,    //ss0
+        (unsigned short) 0,    //unused1
+        (unsigned int) 0,    //esp1
+        (unsigned short) 0,    //ss1
+        (unsigned short)  0,    //unused2
+        (unsigned int) 0,    //esp2
+        (unsigned short) 0,    //ss2
+        (unsigned short) 0,    //u3
+        (unsigned int) 0xA000,    //cr3 //
+        (unsigned int) 0x8000,    //eip
+        (unsigned int) 0x202,    //eflags
+        (unsigned int) 0,    //eax
+        (unsigned int) 0,    //ecx
+        (unsigned int) 0,    //edx
+        (unsigned int) 0,    //ebx
+        (unsigned int) 0x15FFF,    //esp
+        (unsigned int) 0x15FFF,    //ebp
+        (unsigned int) 0,    //esi
+        (unsigned int) 0,    //edi
+        (unsigned short)  0x10,    //es
+        (unsigned short)  0,
+        (unsigned short)  0x8,    //cs
+        (unsigned short)  0,
+        (unsigned short)  0x10,    //ss
+        (unsigned short)  0,
+        (unsigned short)  0x10,    //ds
+        (unsigned short)  0,
+        (unsigned short)  0x10,    //fs
+        (unsigned short)  0,
+        (unsigned short)  0x10,    //gs
+        (unsigned short)  0,
+        (unsigned short)  0,    //ldt
+        (unsigned short)  0,
+        (unsigned short)  0,    //dtrap
+        (unsigned short)  0xFFFF//iomap
+    },
+\end{verbatim}
+
+Es importante aclarar como se ``llenaron'' los campos de esta tss. En primer lugar, como podemos ver, tenemos una pila y un \emph{stack pointer} por cada nivel de privilegio (0 a 2). Como en nuestro trabajo práctico no hay cambios de privilegios de ningún tipo, las pilas correspondientes a los anillos 1,2 se dejaron en cero puesto que no se usan. Lo mismo ocurre con la de nivel 0 pero por distintas razones, ya que en ningún momento la misma es usada, se decidió settearla en 0. Por otro lado, se pusieron los valores que corresponden a los registros que apuntan a segmentos de código y datos tal como se los configuró en ejercicios previos. Además no podemos evitar mencionar la dirección 0x15fff como el inicio de la pila de la aplicación (ver mapa de memoria) y no la 0x15000 como uno podría pensar intuitivamente (recordemos que la pila ``crece para bajo''). En último término, el otro campo que llenamos que nos interesa mencionar es el del registro cr3 que se relaciona con el descriptor del directorio de páginas.
+
+En siguiente término, para que algo de lo anteriormente dicho tenga sentido, es necesario inicializar los descriptores de las tareas en la GDT. Volvimos al archivo \texttt{gdt.c} y agregamos los descriptores correspondientes con cada tarea (incluso de la tarea \emph{dummy}). He aquí un ejemplo: 
+
+\begin{verbatim}
+  /* EL DESC DE LA TAREA DEL PINTOR */
+        (gdt_entry){
+                (unsigned short) 0x67,  //limite [0:15]  
+                (unsigned short) 0,     //base [16:31]
+                (unsigned char) 0x0,            //base []
+                (unsigned char) 0x9,            //tipo [24]
+                (unsigned char) 0,              //S [25]
+                (unsigned char) 0,              //DPL [26:27]
+                (unsigned char) 1,              //P [28]
+                (unsigned char) 0x0,            //limite [16:19]
+                (unsigned char) 0,              //AVL [20]
+                (unsigned char) 0,              //L [21]
+                (unsigned char) 1,              //DB [22]
+                (unsigned char) 0,              //G [23]
+                (unsigned char) 0x00            //BASE [24:31]
+        },
+\end{verbatim}
+
+Observemos que si bien son bastante distintos a los descriptores de segmento que teníamos anteriormente, nos gustaría recalcar la presencia del S=0 indicando que es un descriptor de sistema, y por otro lado, base y límite en 0x0 y 0x67. El segundo número es un requisito (tamaño de la tss-1), el primero se debe a que en esa dirección se debe cargar la posición en memoria del arreglo tsss que en un principio no sabemos donde está cargado. Es por eso, que setteamos esos valores dentro del archivo \texttt{kernel.asm} mediante la siguiente rutina que se encarga de recorrer dicho arreglo (cada tss tiene un tamaño fijo de 104 bytes) y de llenar con los valores que corresponden en cada descriptor de la gdt. 
+
+\begin{verbatim}
+     ; Ejercicio 4
+    
+        ; TODO: Inicializar las TSS
+        
+        ; TODO: Inicializar correctamente los descriptores de TSS en la GDT
+        xchg bx, bx
+        mov eax, gdt
+        add eax, 0x20
+
+        mov ebx, tsss
+ 
+        mov [eax+2], bx
+        shr ebx, 16
+        mov [eax+4], bl
+        mov [eax+7], bh
+
+        add eax, 8 
+
+        mov ebx, tsss
+        add ebx, 104
+
+        mov [eax+2], bx
+        shr ebx, 16
+        mov [eax+4], bl
+        mov [eax+7], bh
+
+        add eax, 8 
+
+        mov ebx, tsss
+        add ebx, 104
+        add ebx, 104
+
+        mov [eax+2], bx
+        shr ebx, 16
+        mov [eax+4], bl
+        mov [eax+7], bh
+
+	; en este punto se han puesto los valores correctos en la gdt
+        ; TODO: Cargar el registro TR con el descriptor de la GDT de la TSS actual
+
+        mov ax, 0x20
+        ltr ax
+\end{verbatim}
+
+Una vez corregidas las entradas de la GDT, se procede a cargar el registro \texttt{TR} \emph{Task Register} con el valor de la tarea actual mediante la instrucciones escritas arriba.
+
+Luego la ejecución continua habilitando los pics 8259 y las interrupciones:
+\begin{verbatim}
+   ; TODO: Habilitar la PIC
+         pic_enable:
+            mov al, 0x00
+            out 0x21, al
+            mov al, 0x00
+            out 0xA1, al
+        ; TODO: Habilitar Interrupciones
+        sti
+\end{verbatim}
+
+...y finalmente se cambia a la primera tarea con el siguiente ``salto lejano'' del estilo \texttt{jmp segmento:offset} donde ``segmento'' es en realidad la dirección en la GDT de un descriptor de TSS. Esto producirá de manera efectiva, el cambio de tarea.
+\verb=   jmp 0x28:0 =
+
+En este punto logramos pasar a la primer tarea que teníamos. Ahora es necesario, de alguna manera, poder intercambiar a intervalos regulares entre las tareas. pintor y traductor Para esto se modificó la rutina que dibujaba el reloj en la pantalla, incorporándole el salto entre tareas. Entonces la misma queda así:
+
+\begin{verbatim}
+ ; Interrupción del reloj
+_isr32:    
+    cli
+    call next_clock
+    
+    ;paso de tarea
+    cmp BYTE [isrTarea], 0x0
+    jne pasarAPintor    
+    pasarATraductor:
+        mov BYTE [isrTarea], 0x1
+        jmp 0x30:0
+        sti
+        iret
+    pasarAPintor:
+        mov BYTE [isrTarea], 0x0
+        jmp 0x28:0
+        sti
+        iret
+\end{verbatim}
+
+Como podemos apreciar, la rutina anterior chequea el valor de una posición de memoria y según este sea 1 ó 0, ejecuta una tarea o la otra. De esta manera las tareas se van ejecutando a intervalos regulares. Ambos ramas de la ejecución culminan con un \texttt{sti} para habilitar las interrupciones y con un \texttt{iret} para volver correctamente al punto de ejecución anterior. 
+
+Como prometimos más arriba, no aclaramos que era la tarea \emph{dummy}. Recordemos que cuando se hace un cambio de tareas se guarda el contexto de la tarea actual en su correspondiente TSS y se carga el contexto de la próxima tarea a ejecutar. En el primer paso, si no tenemos una TSS ``dummy'' cuando carguemos la primera tarea vamos a salvar el contexto de la tarea en curso porque así es la mecánica. Ahora, el problema es que si no tenemos una TSS para la tarea actual entonces cuando se produzca el cambio, no va a existir un lugar a donde volcar el contexto de la tarea saliente, consecuentemente se produce un error y se interrumpe la ejecución. Este observación vale para la tarea cero. Para los otros cambios no es necesario hacer más cosas que el \texttt{jmp far} que vimos antes.

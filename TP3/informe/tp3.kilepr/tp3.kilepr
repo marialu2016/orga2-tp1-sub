@@ -4,7 +4,7 @@ img_extIsRegExp=false
 img_extensions=.eps .jpg .jpeg .png .pdf .ps .fig .gif
 kileprversion=2
 kileversion=2.1 beta2
-lastDocument=../main.tex
+lastDocument=../desarrollo.tex
 masterDocument=
 name=tp3
 pkg_extIsRegExp=false
@@ -18,10 +18,10 @@ QuickBuild=
 
 [item:../desarrollo.tex]
 archive=true
-column=0
+column=384
 encoding=UTF-8
 highlight=LaTeX
-line=0
+line=433
 open=true
 order=1
 
