@@ -189,5 +189,87 @@ fin_mensaje:
 
 \section{Ejercicio 3}
 
+Para el ejercicio 3, se nos pide completar las entradas necesarias de la \texttt{IDT} (Interrupt Descriptor Table) de forma tal de asociar una rutina de interrupción para cada excepción del procesador y para la interrupción del reloj. Las interrupciones de excepciones muestran por pantalla cual de estas tuvo lugar, es decir, si hubo un fallo de página, por ejemplo, se imprime por pantalla el mensaje \texttt{``EXCEPTION: PAGE FAULT''}.
+
+Esto se logró luego de completar la IDT de forma correcta y asociando cada entrada de la IDT con el segmento de código definido anteriormente y con la rutina de atención de interrupciones que corresponde a dicha excepción. %A continuación vemos un ejemplo de esto: %estaría poner como queda un segmento... quise hacer una captura de pantalla del dibujito y llenarlo con los datos pero hay algo que no me termina de cerrar del macro del idt.c
+
+Las rutinas de atención de excepciones están descriptas en dos archivos de \texttt{C}: \texttt{isr.c} e \texttt{isr.h}. El código de las mismas es en general similar y lo que hace es mostrar por pantalla que excepción se produjo. 
+
+\begin{verbatim}
+msgisr0: db 'EXCEPCION: Division por cero'
+msgisr0_len equ $-msgisr0
+_isr0:
+        mov edx, msgisr0
+        IMPRIMIR_TEXTO edx, msgisr0_len, 0x0C, 0, 0, 0x13000
+        jmp $
+    iret
+
+\end{verbatim}
+
+La particularidad de esta rutina es que el último parámetro que indica el lugar en donde se escribe el mensaje corresponde con la dirección \texttt{0x13000} que es a donde fue mapeada (via paginación) la memoria de video. % podría hasta ser un footnote
+
+Especial tratamiento tuvo la rutina de atención de la interrupción del clock del microprocesador (\texttt{\_isr32}) que se encarga de llamar a la función \texttt{next\_clock} provista por la cátedra que dibuja un reloj en la pantalla, que con cada interrupción va cambiando su forma. Dicha rutina tiene el siguiente aspecto:
+\begin{verbatim}
+ ; Interrupción del reloj
+_isr32:    
+    cli
+    call next_clock
+    ;(...)        Aquí se cambia de tareas (ver ej 4).
+    sti  
+    iret
+\end{verbatim}
+
+Para que todo lo anterior tenga sentido, es necesario agregar al archivo principal \texttt{kernel.asm} instrucciones que carguen en memoria la IDT mediante la función \texttt{idtFill()}\footnote{Presente en el archivo \texttt{idt.c}}. Además, se resetean los pics 8259 de forma tal de rempaear los dichos controladores a un espacio de interrupciones designado a los dispositivos de entrada-salida. % sacado de la clase de interrupciones de Daviiiid.
+De otra manera, la configuración ``de-facto'' entraría en conflicto porque esas direcciones están reservadas por intel (error de diseño de IBM). Entonces se settea un offset para el pic master en 0x20 y 0x28 para el pic slave (recordemos que se tienen dos pics conectados en cascada) %sacado de os-dev:http://wiki.osdev.org/8259_PIC
+
+En último lugar, se le pasa el descriptor de la IDT (el \texttt{IDT\_DESC}) y cargarlo en registro \texttt{IDTR} mediante la instrucción \texttt{lidt}.
+
+\begin{verbatim}
+  ; Ejercicio 3
+    
+        ; TODO: Inicializar la IDT
+        call idtFill
+        ; TODO: Resetear la pic
+        pic_reset:
+            mov al, 11h
+            out 20h, al
+
+            mov al, 20h
+            out 21h, al
+
+            mov al, 04h
+            out 21h, al
+
+            mov al, 01h
+            out 21h, al
+
+            mov al, 0xFF
+            out 21h, al
+
+            mov al, 0x11
+            out 0xA1, al
+
+            mov al, 0x28
+            out 0xA1, al
+
+            mov al, 0x02
+            out 0xA1, al
+
+            mov al, 0x01
+            out 0xA1, al
+
+            mov al, 0xFF
+            out 0xA1, al
+       
+
+            ; TODO: Cargar el registro IDTR
+            lidt[IDT_DESC]
+           
+\end{verbatim}
+
 
 \section{Ejercicio 4}
+
+En último lugar y respondiendo a la consigna final se nos requiere configurar el entorno para poder en primer lugar tener tareas en nuestro sistema y poder luego, hacer cambios entre ellas como lo haría un sistema operativo a gran escala. % :o
+
+Para ello completamos en primer lugar las \texttt{TSS} (Task State Segment) de las tareas \emph{pintor.tsk} y \emph{traductor.tsk}. Como sabemos, las TSS son esenciales para el manejo de tareas ya que estas contienen información esencial en lo que respecta a las mismas como ser el estado de los registros del procesador durante la ejecución del proceso en cuestión, los punteros a la pila, los registros \texttt{EFLAGS} y \texttt{EIP}, la tarea ejecutada antes que la actual y el valor del descriptor del directorio de páginas asociado a la tarea. 
